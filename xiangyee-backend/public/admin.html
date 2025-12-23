@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Xiangyee Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .toast-enter { transform: translateY(10px); opacity: 0; }
+    .toast-enter-active {
+      transform: translateY(0);
+      opacity: 1;
+      transition: all 0.25s ease-out;
+    }
+  </style>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+
+  <div class="max-w-6xl mx-auto p-6 space-y-6">
+
+    <div class="flex items-center justify-between">
+      <h1 class="text-3xl font-black">Xiangyee Admin Dashboard</h1>
+      <button id="logout-btn"
+        class="hidden px-3 py-2 rounded-lg border text-sm bg-white hover:bg-neutral-100">
+        Logout
+      </button>
+    </div>
+
+    <!-- LOGIN -->
+    <section id="login-section" class="bg-white p-6 rounded-2xl border shadow">
+      <h2 class="text-xl font-bold mb-3">Staff Login</h2>
+      <form id="login-form" class="grid md:grid-cols-3 gap-3">
+        <input name="username" required placeholder="Username" class="border p-2 rounded" />
+        <input name="password" required type="password" placeholder="Password" class="border p-2 rounded" />
+        <button class="bg-black text-white rounded p-2 font-semibold">Login</button>
+      </form>
+      <p id="login-msg" class="text-sm mt-2 text-red-600"></p>
+    </section>
+
+    <!-- CONTENT -->
+    <section id="content-section" class="hidden space-y-6">
+
+      <!-- TABS -->
+      <div class="bg-white rounded-2xl border shadow">
+        <div class="sticky top-0 bg-white rounded-2xl border-b p-3 flex gap-2 z-10">
+          <button id="tab-orders" class="px-3 py-2 rounded-lg text-sm font-semibold bg-black text-white">
+            Orders
+          </button>
+          <button id="tab-res" class="px-3 py-2 rounded-lg text-sm font-semibold bg-neutral-100 hover:bg-neutral-200">
+            Reservations
+          </button>
+        </div>
+
+        <!-- ORDERS PANEL -->
+        <div id="panel-orders" class="p-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold">Orders</h2>
+          </div>
+          <div id="orders-list" class="mt-4 space-y-3"></div>
+        </div>
+
+        <!-- RESERVATIONS PANEL -->
+        <div id="panel-res" class="p-6 hidden">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold">Reservations</h2>
+          </div>
+          <div id="res-list" class="mt-4 space-y-3"></div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+<script>
+  const API_BASE = "/api";
+  const ASSET_BASE = location.origin;
+
+  let token = localStorage.getItem("xiangyee_token");
+
+  const loginSection   = document.getElementById("login-section");
+  const contentSection = document.getElementById("content-section");
+  const logoutBtn      = document.getElementById("logout-btn");
+  const msg            = document.getElementById("login-msg");
+
+  const money = (n) => `$${Number(n || 0).toFixed(2)}`;
+
+  // ====== DATE/TIME HELPERS ======
+  function formatTimeHM(value) {
+    if (!value) return "";
+    const s = String(value);
+    const m = s.match(/(\d{2}:\d{2})/);
+    return m ? m[1] : s;
+  }
+  function formatDateYMD(value) {
+    if (!value) return "";
+    const s = String(value);
+    const m = s.match(/(\d{4}-\d{2}-\d{2})/);
+    return m ? m[1] : s;
+  }
+
+  // ====== TOAST ======
+  function showToast(text, type = "info") {
+    const container = document.getElementById("toast-container");
+    const div = document.createElement("div");
+    const color = type === "error" ? "bg-red-600" :
+                  type === "success" ? "bg-green-600" : "bg-neutral-900";
+
+    div.className = `${color} text-white px-4 py-2 rounded-xl shadow-lg text-sm flex items-center gap-2 toast-enter`;
+    div.innerHTML = `<span>${text}</span>`;
+    container.appendChild(div);
+
+    requestAnimationFrame(() => div.classList.add("toast-enter-active"));
+
+    setTimeout(() => {
+      div.classList.remove("toast-enter-active");
+      div.style.opacity = "0";
+      div.style.transform = "translateY(10px)";
+      setTimeout(() => div.remove(), 250);
+    }, 4000);
+  }
+
+  function setAuthedUI(authed) {
+    loginSection.classList.toggle("hidden", authed);
+    contentSection.classList.toggle("hidden", !authed);
+    logoutBtn.classList.toggle("hidden", !authed);
+  }
+
+  function doLogout() {
+    token = null;
+    localStorage.removeItem("xiangyee_token");
+    clearAutoRefresh();
+    setAuthedUI(false);
+  }
+
+  async function login(e) {
+  e.preventDefault();
+  msg.textContent = "";
+
+  const form = e.target;
+  const payload = {
+    username: form.username.value.trim(),
+    password: form.password.value.trim()
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      msg.textContent = err.error || err.message || "Login failed";
+      return;
+    }
+
+    const data = await res.json();
+    if (!data.token) {
+      msg.textContent = "Login succeeded but no token returned";
+      return;
+    }
+
+    token = data.token;
+    localStorage.setItem("xiangyee_token", token);
+
+    setAuthedUI(true);
+    loadOrders(true);
+    loadReservations(true);
+    setupAutoRefresh();
+
+  } catch (err) {
+    console.error(err);
+    msg.textContent = "Cannot reach backend";
+  }
+}
+
+  async function authedFetch(url, opts={}) {
+    const res = await fetch(url, {
+      ...opts,
+      headers: {
+        ...(opts.headers || {}),
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (res.status === 401) {
+      doLogout();
+      alert("Session expired. Please login again.");
+      throw new Error("Unauthorized");
+    }
+    return res;
+  }
+
+  function safeParseItems(items) {
+    if (!items) return [];
+    if (Array.isArray(items)) return items;
+    try { return JSON.parse(items); }
+    catch { return []; }
+  }
+
+  // ====== LIVE TRACKING STATE ======
+  let lastOrderIds = new Set();
+  let lastResIds   = new Set();
+
+  let unreadOrderIds = new Set();
+  let unreadResIds   = new Set();
+
+  function applyUnreadStyle(cardEl, isUnread) {
+    cardEl.classList.toggle("ring-2", isUnread);
+    cardEl.classList.toggle("ring-amber-400", isUnread);
+    cardEl.classList.toggle("border-amber-400", isUnread);
+
+    if (isUnread) {
+      cardEl.classList.remove("bg-neutral-50");
+      cardEl.classList.add("bg-amber-50");
+    } else {
+      cardEl.classList.remove("bg-amber-50");
+      cardEl.classList.add("bg-neutral-50");
+      cardEl.classList.remove("border-amber-400");
+    }
+  }
+
+  let ordersInterval = null;
+  let resInterval    = null;
+
+  // ====== TABS ======
+  const tabOrdersBtn = document.getElementById("tab-orders");
+  const tabResBtn    = document.getElementById("tab-res");
+  const panelOrders  = document.getElementById("panel-orders");
+  const panelRes     = document.getElementById("panel-res");
+
+  let activeTab = "orders"; // track current tab
+
+  function setActiveTab(tab) {
+    activeTab = tab;
+    const isOrders = tab === "orders";
+
+    panelOrders.classList.toggle("hidden", !isOrders);
+    panelRes.classList.toggle("hidden", isOrders);
+
+    tabOrdersBtn.classList.toggle("bg-black", isOrders);
+    tabOrdersBtn.classList.toggle("text-white", isOrders);
+    tabOrdersBtn.classList.toggle("bg-neutral-100", !isOrders);
+    tabOrdersBtn.classList.toggle("text-neutral-900", !isOrders);
+
+    tabResBtn.classList.toggle("bg-black", !isOrders);
+    tabResBtn.classList.toggle("text-white", !isOrders);
+    tabResBtn.classList.toggle("bg-neutral-100", isOrders);
+    tabResBtn.classList.toggle("text-neutral-900", isOrders);
+  }
+
+  setActiveTab("orders");
+  tabOrdersBtn.onclick = () => setActiveTab("orders");
+  tabResBtn.onclick    = () => setActiveTab("reservations");
+
+  // ====== ORDERS UI ======
+  function orderCard(o) {
+    const div = document.createElement("div");
+    div.className = "p-4 rounded-xl border bg-neutral-50";
+
+    applyUnreadStyle(div, unreadOrderIds.has(o.id));
+
+    const itemsArr = safeParseItems(o.items);
+
+    div.innerHTML = `
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+        <div>
+          <div class="font-semibold">
+            Order No: <span class="font-black">${o.order_no || `#${o.id}`}</span>
+            — ${o.customer_name} (${o.customer_phone})
+          </div>
+          <div class="text-sm text-neutral-600">
+            Type: ${o.order_type}
+            ${o.table_no ? `• Table ${o.table_no}` : ""}
+            • Total ${money(o.total_amount)}
+          </div>
+          <div class="text-xs text-neutral-500">Status: ${o.status}</div>
+          ${o.notes ? `<div class="text-xs text-neutral-500 mt-1">Notes: ${o.notes}</div>` : ""}
+        </div>
+
+        <select class="border p-1 rounded text-sm w-full md:w-auto">
+          ${["pending","ready","collected"]
+            .map(s => `<option value="${s}" ${s===o.status?"selected":""}>${s}</option>`).join("")}
+        </select>
+      </div>
+
+      <div class="mt-3 bg-white p-3 rounded-lg border text-sm">
+        <div class="font-semibold mb-2">Items</div>
+        ${
+          itemsArr.length
+          ? itemsArr.map(it => `
+              <div class="flex justify-between border-b py-1 last:border-b-0">
+                <span>${it.name_en || it.name || ("Item #" + it.menu_item_id)}</span>
+                <span>x${it.quantity}</span>
+              </div>
+            `).join("")
+          : `<div class="text-neutral-500 text-xs">No items recorded.</div>`
+        }
+      </div>
+    `;
+
+    const sel = div.querySelector("select");
+    sel.onchange = async () => {
+      await authedFetch(`${API_BASE}/orders/${o.id}`, {
+        method: "PUT",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ status: sel.value })
+      });
+
+      unreadOrderIds.delete(o.id);
+      loadOrders(true);
+    };
+
+    return div;
+  }
+
+  async function loadOrders(initial = false) {
+    const root = document.getElementById("orders-list");
+    if (initial) root.innerHTML = `<div class="text-sm text-neutral-500">Loading...</div>`;
+
+    try {
+      const res = await authedFetch(`${API_BASE}/orders`);
+      if (!res.ok) throw new Error("Failed to load orders");
+
+      let data = await res.json();
+
+      data.sort((a, b) => {
+        const da = a.created_at ? new Date(a.created_at) : new Date(0);
+        const db = b.created_at ? new Date(b.created_at) : new Date(0);
+        return db - da || (b.id - a.id);
+      });
+
+      root.innerHTML = "";
+
+      if (!data.length) {
+        root.innerHTML = `<div class="text-sm text-neutral-500">No orders yet.</div>`;
+        lastOrderIds = new Set();
+        return;
+      }
+
+      const currentIds = new Set(data.map(o => o.id));
+
+      if (!initial) {
+        const newOnes = data.filter(o => !lastOrderIds.has(o.id));
+        if (newOnes.length) {
+          newOnes.forEach(o => unreadOrderIds.add(o.id));
+          showToast(
+            `🧾 New order(s): ${newOnes.map(o => o.order_no || `#${o.id}`).join(", ")}`,
+            "success"
+          );
+
+          // ✅ if currently on Reservations tab, auto switch to Orders tab
+          if (activeTab === "reservations") {
+            setActiveTab("orders");
+          }
+        }
+      }
+
+      lastOrderIds = currentIds;
+      data.forEach(o => root.appendChild(orderCard(o)));
+
+    } catch (err) {
+      console.error(err);
+      root.innerHTML = `<div class="text-sm text-red-600">Error loading orders.</div>`;
+    }
+  }
+
+  // ====== RESERVATIONS UI ======
+  function resCard(r) {
+    const div = document.createElement("div");
+    const timeStr = formatTimeHM(r.reservation_time);
+    const dateStr = formatDateYMD(r.reservation_date);
+
+    div.className = "p-4 rounded-xl border bg-neutral-50";
+    applyUnreadStyle(div, unreadResIds.has(r.id));
+
+    div.innerHTML = `
+      <div class="flex flex-col md:flex-row md:justify-between gap-3">
+        <div>
+          <div class="font-semibold">${r.customer_name} (${r.customer_phone})</div>
+          <div class="text-sm text-neutral-600">
+            ${dateStr} • ${timeStr || "-"} • Pax ${r.pax}
+          </div>
+          <div class="text-xs text-neutral-500">Status: ${r.status}</div>
+          ${r.notes ? `<div class="text-xs text-neutral-500 mt-1">Notes: ${r.notes}</div>` : ""}
+        </div>
+
+        <select class="border p-1 rounded text-sm w-full md:w-auto">
+          ${["pending","confirmed","seated","completed","cancelled"]
+            .map(s => `<option value="${s}" ${s===r.status?"selected":""}>${s}</option>`).join("")}
+        </select>
+      </div>
+    `;
+
+    const sel = div.querySelector("select");
+    sel.onchange = async () => {
+      await authedFetch(`${API_BASE}/reservations/${r.id}`, {
+        method: "PUT",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ status: sel.value })
+      });
+
+      unreadResIds.delete(r.id);
+      loadReservations(true);
+    };
+
+    return div;
+  }
+
+  async function loadReservations(initial = false) {
+    const root = document.getElementById("res-list");
+    if (initial) root.innerHTML = `<div class="text-sm text-neutral-500">Loading...</div>`;
+
+    try {
+      const res = await authedFetch(`${API_BASE}/reservations/admin`);
+      if (!res.ok) throw new Error("Failed to load reservations");
+
+      let data = await res.json();
+
+      data.sort((a, b) => {
+        const da = formatDateYMD(a.reservation_date) || "9999-12-31";
+        const db = formatDateYMD(b.reservation_date) || "9999-12-31";
+        const ta = formatTimeHM(a.reservation_time) || "00:00";
+        const tb = formatTimeHM(b.reservation_time) || "00:00";
+        const aKey = Number(da.replaceAll("-", "") + ta.replace(":", ""));
+        const bKey = Number(db.replaceAll("-", "") + tb.replace(":", ""));
+        if (aKey !== bKey) return aKey - bKey;
+        return (a.id || 0) - (b.id || 0);
+      });
+
+      root.innerHTML = "";
+
+      if (!data.length) {
+        root.innerHTML = `<div class="text-sm text-neutral-500">No reservations yet.</div>`;
+        lastResIds = new Set();
+        return;
+      }
+
+      const currentIds = new Set(data.map(r => r.id));
+
+      if (!initial) {
+        const newRes = data.filter(r => !lastResIds.has(r.id));
+        if (newRes.length) {
+          newRes.forEach(r => unreadResIds.add(r.id));
+          showToast(
+            `New reservation(s): ${newRes
+              .map(r => `${formatDateYMD(r.reservation_date)} ${formatTimeHM(r.reservation_time)} • ${r.customer_name}`)
+              .join(" | ")}`,
+            "success"
+          );
+
+          // ✅ if currently on Orders tab, auto switch to Reservations tab
+          if (activeTab === "orders") {
+            setActiveTab("reservations");
+          }
+        }
+      }
+
+      lastResIds = currentIds;
+      data.forEach(r => root.appendChild(resCard(r)));
+
+    } catch (err) {
+      console.error(err);
+      root.innerHTML = `<div class="text-sm text-red-600">Error loading reservations.</div>`;
+    }
+  }
+
+  // ====== AUTO REFRESH ======
+  function setupAutoRefresh() {
+    clearAutoRefresh();
+
+    ordersInterval = setInterval(() => {
+      if (token) loadOrders(false);
+    }, 5000);
+
+    resInterval = setInterval(() => {
+      if (token) loadReservations(false);
+    }, 5000);
+  }
+
+  function clearAutoRefresh() {
+    if (ordersInterval) clearInterval(ordersInterval);
+    if (resInterval)  clearInterval(resInterval);
+    ordersInterval = null;
+    resInterval    = null;
+  }
+
+  // ====== WIRE EVENTS ======
+  document.getElementById("login-form").addEventListener("submit", login);
+  logoutBtn.onclick = doLogout;
+
+  // auto-login if token exists
+  if (token) {
+    setAuthedUI(true);
+    loadOrders(true);
+    loadReservations(true);
+    setupAutoRefresh();
+  } else {
+    setAuthedUI(false);
+  }
+</script>
+</body>
+</html>

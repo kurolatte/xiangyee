@@ -1,0 +1,27 @@
+USE xiangyee_db;
+
+INSERT INTO menu_items (name_cn, name_en, price, category) VALUES
+('老姜炒鸡','Stir-Fried Chicken with Old Ginger',38.90,'Main Dishes'),
+('酸辣椒炒鸡','Stir-Fried Chicken with Pickled Chili',38.90,'Main Dishes'),
+('辣椒炒肉','Stir-Fried Pork with Chili Pepper',28.60,'Main Dishes'),
+('鲜炒黄牛肉','Stir-Fried Fresh Yellow Beef',34.80,'Main Dishes'),
+('豆芽炒牛肉','Stir-Fried Beef with Bean Sprouts',32.80,'Main Dishes'),
+('大蒜叶炒腊牛肉','Stir-Fried Cured Beef with Garlic Sprouts',41.60,'Main Dishes'),
+('四季豆炒油渣','Stir-Fried String Beans with Pork Cracklings',19.90,'Vegetables'),
+('高山笋丝','Mountain Bamboo Shoots',29.60,'Vegetables'),
+('杂菌锅','Mixed Mushroom Pot',28.60,'Soup & Pot'),
+('甜笋炒腊肉','Stir-Fried Bamboo Shoots with Cured Pork',36.60,'Main Dishes'),
+('香芹炒香干','Stir-Fried Celery with Dried Tofu',22.00,'Vegetables'),
+('爆炒牛蛙','Stir-Fried Frog with Chili',42.80,'Main Dishes'),
+('全家福','Meat Hotchpotch',47.80,'Main Dishes'),
+('臭豆腐','Fermented Beancurd',12.00,'Sides'),
+('青椒煎茄子','Panfried Eggplant with Green Chili',19.60,'Vegetables'),
+('老卤三合一','Three Combination Marinated Platter',24.60,'Cold Dishes'),
+('老手艺手工扣肉','Traditional Handmade Braised Pork Belly',41.30,'Main Dishes'),
+('烧辣椒茄子擂皮蛋','Mashed Eggplant Chili with Century Egg',17.90,'Vegetables'),
+('嫩海带肉丸汤','Tender Kelp Meatball Soup',28.30,'Soup & Pot'),
+('腊味合蒸','Steamed Assorted Cured Meats',42.60,'Main Dishes'),
+('寒菌焖肉','Stewed Pork with Wild Mushrooms',58.00,'Main Dishes'),
+('五常大米碗','Rice Bowl',2.50,'Staples'),
+('手工糖卷','Handmade Sweet Rolls',2.50,'Dessert'),
+('手工猪肉烧卖','Handmade Pork Siu Mai',2.50,'Dessert');
