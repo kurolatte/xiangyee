@@ -300,7 +300,7 @@ router.get("/:id", async (req, res) => {
 router.get("/admin", requireAuth, async (req, res) => {
   try {
     const r = await pool.query(
-      `SELECT * FROM orders ORDER BY created_at DESC`
+      `SELECT * FROM orders ORDER BY id DESC`
     );
     return res.json(r.rows);
   } catch (e) {
