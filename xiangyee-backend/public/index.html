@@ -98,13 +98,14 @@
   <!-- Hero -->
 <section id="top" class="bg-white">
   <!-- Image banner -->
-  <div class="w-full">
-    <img
-      src="/images/hero.png"
-      alt="Xiangyee Hero"
-      class="h-[80vh] max-h-[900px] overflow-hidden"
-    />
-  </div>
+  <div class="w-full h-[80vh] max-h-[900px] overflow-hidden">
+  <img
+    src="/images/hero.png"
+    alt="Xiangyee Hero"
+    class="w-full h-full object-cover"
+  />
+</div>
+
 
   <!-- Text content below image -->
   <div class="max-w-6xl mx-auto px-4 py-10 md:py-14">
@@ -776,7 +777,7 @@
   else cart.push({
     id: item.id,
     name: item.name_en,
-    price: item.price,
+    price: Number(item.price),
     image_url: item.image_url,
     qty: 1
   });
@@ -799,7 +800,7 @@
       updateCartCount();
     }
 
-    function cartTotal() { return cart.reduce((sum, c) => sum + c.price * c.qty, 0); }
+    function cartTotal() { return cart.reduce((sum, c) => sum + Number(c.price) * c.qty, 0); }
 
     function updateCartCount() {
       const count = cart.reduce((s, i) => s + i.qty, 0);
@@ -855,7 +856,7 @@
         </div>
 
         <div class="text-right">
-          <div class="font-bold">$${item.price.toFixed(2)}</div>
+          <div class="font-bold">$${Number(item.price).toFixed(2)}</div>
           <button class="mt-2 px-3 py-1.5 rounded-lg bg-brand-red text-white text-sm font-semibold hover:bg-red-700">
             Add to Cart
           </button>

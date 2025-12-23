@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
           id,
           name_en,
           name_cn,
-          price,
+          price::float8 AS price,
           category,
           image_url
         FROM menu_items
@@ -33,7 +33,7 @@ router.get("/", async (req, res) => {
         id,
         name_en,
         name_cn,
-        price,
+        price::float8 AS price,
         category,
         image_url
       FROM menu_items
