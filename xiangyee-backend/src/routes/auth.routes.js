@@ -5,32 +5,6 @@ const { pool } = require("../db");
 
 const router = express.Router();
 
-/**
- * Seed admin once (visit /api/auth/seed-admin once, then delete this route)
- * IMPORTANT: Change the default password after seeding.
- */
-router.get("/seed-admin", async (req, res) => {
-  try {
-    const username = "xiangyee_admin";
-    const role = "admin";
-    const password_hash = await bcrypt.hash("admin123", 10);
-
-    // Requires a UNIQUE constraint on staff_users.username
-    await pool.query(
-      `
-      INSERT INTO staff_users (username, password_hash, role)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (username) DO NOTHING
-      `,
-      [username, password_hash, role]
-    );
-
-    res.json({ message: "Seeded admin: xiangyee_admin / admin123" });
-  } catch (e) {
-    console.error("seed-admin error:", e);
-    res.status(500).json({ error: e.message });
-  }
-});
 
 router.post("/login", async (req, res) => {
   try {
