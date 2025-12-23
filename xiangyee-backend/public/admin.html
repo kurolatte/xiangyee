@@ -323,7 +323,7 @@
     if (initial) root.innerHTML = `<div class="text-sm text-neutral-500">Loading...</div>`;
 
     try {
-      const res = await authedFetch(`${API_BASE}/orders`);
+      const res = await authedFetch(`${API_BASE}/orders/admin`);
       if (!res.ok) throw new Error("Failed to load orders");
 
       let data = await res.json();
