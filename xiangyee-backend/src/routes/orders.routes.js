@@ -178,7 +178,7 @@ router.get("/track/:orderNo", async (req, res) => {
 });
 
 // MARK COLLECTED (customer clicks "I collected")
-router.post("/:id/collected", async (req, res) => {
+router.post("/:id(\\d+)/collected", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
 
@@ -261,7 +261,7 @@ router.post("/:id/collected", async (req, res) => {
    PUBLIC: GET ORDER BY ID (TESTING)
    GET /api/orders/:id
 ========================= */
-router.get("/:id", async (req, res) => {
+router.get("/:id(\\d+)", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
 
@@ -312,7 +312,7 @@ router.get("/admin", requireAuth, async (req, res) => {
    ADMIN: UPDATE STATUS
    PUT /api/orders/:id
 ========================= */
-router.put("/:id", requireAuth, async (req, res) => {
+router.put("/:id(\\d+)", requireAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { status } = req.body;
