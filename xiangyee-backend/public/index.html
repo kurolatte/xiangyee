@@ -4,14 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Xiangyee Hunan Cuisine | Bold, Fiery, Authentic</title>
-  <meta name="description" content="Xiangyee Hunan Cuisine in Singapore — bold, spicy Hunan flavours. View menu, book a table, find us." />
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -26,7 +23,6 @@
 
   <style>
     html { scroll-behavior: smooth; }
-    .backdrop { background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)); }
     .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.08); }
     .no-scrollbar::-webkit-scrollbar { display:none; }
     .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
@@ -35,1242 +31,193 @@
 
 <body class="bg-neutral-50 text-neutral-900 font-sans">
 
-  <!-- Header -->
-  <header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-neutral-200">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-
-      <!-- Logo -->
-      <a href="#top" class="flex items-center">
-  <img
-    src="/images/LOGO.png"
-    alt="Xiangyee Hunan Cuisine"
-    class="h-14 md:h-20 object-contain"
-  />
-</a>
-
-
-
-      <!-- Nav -->
-      <nav class="hidden md:flex items-center gap-6 text-sm">
-        <a id="my-order-link" href="#my-order" class="hidden hover:text-brand-red">My Order</a>
-        <a href="#about" class="hover:text-brand-red">About</a>
-        <a href="#menu" class="hover:text-brand-red">Menu</a>
-        <a href="#gallery" class="hover:text-brand-red">Gallery</a>
-        <a href="#reserve" class="hover:text-brand-red">Reserve</a>
-        <a href="#contact" class="hover:text-brand-red">Contact</a>
-      </nav>
-
-      <!-- Actions -->
-      <div class="flex items-center gap-2">
-        <a id="my-order-btn"
-           href="#my-order"
-           class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
-          My Order
-        </a>
-
-        <button id="cart-btn" class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
-          Cart (<span id="cart-count">0</span>)
-        </button>
-
-        <a href="#reserve" class="px-4 py-2 rounded-xl bg-brand-red text-white font-semibold shadow-soft hover:bg-red-700">
-          Book a Table
-        </a>
-
-        <button id="mobile-btn" class="md:hidden p-2 rounded-lg border border-neutral-300">
-          ☰
-        </button>
-      </div>
-    </div>
-
-    <!-- Mobile Nav -->
-    <div id="mobile-nav" class="md:hidden hidden border-t border-neutral-200 bg-white">
-      <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 text-sm">
-        <a id="my-order-link-mobile" href="#my-order" class="hidden py-2 hover:text-brand-red">My Order</a>
-        <a href="#about" class="py-2 hover:text-brand-red">About</a>
-        <a href="#menu" class="py-2 hover:text-brand-red">Menu</a>
-        <a href="#gallery" class="py-2 hover:text-brand-red">Gallery</a>
-        <a href="#reserve" class="py-2 hover:text-brand-red">Reserve</a>
-        <a href="#contact" class="py-2 hover:text-brand-red">Contact</a>
-      </div>
-    </div>
-  </header>
-
-  <!-- Hero -->
-<section id="top" class="bg-white">
-  <!-- Image banner -->
+<!-- HERO -->
+<section class="bg-white">
   <div class="w-full h-[80vh] max-h-[900px] overflow-hidden">
-  <img
-    src="/images/hero.png"
-    alt="Xiangyee Hero"
-    class="w-full h-full object-cover"
-  />
-</div>
-
-
-  <!-- Text content below image -->
-  <div class="max-w-6xl mx-auto px-4 py-10 md:py-14">
-    <h1 class="text-4xl md:text-6xl font-black leading-tight">
-      Take materials from the mountains and fields to create
-      <span class="text-red-500">Hunan Flavours</span>
-    </h1>
-
-    <p class="mt-5 max-w-2xl text-neutral-600">
-      Xiangyee is dedicated to showcasing the rustic flavors of Hunan’s mountain cuisine. Staying true to our roots 
-      — “gathering from the wild, cooking with heart” 
-      — we craft each dish using authentic ingredients and traditional hometown techniques. 
-      Spicy, sincere, and full of soul, our cuisine brings a taste of the Hunan highlands to every table. 
-      Whether you’re from afar or nearby, we hope you’ll find a heartfelt bite of Hunan at Xiangyee.
-    </p>
-
-    <div class="mt-8 flex flex-wrap gap-3">
-      <a href="/#menu" class="px-5 py-3 rounded-xl bg-black text-white font-semibold">
-        View Menu
-      </a>
-      <a href="/#reserve" class="px-5 py-3 rounded-xl bg-brand-red text-white font-semibold">
-        Reserve Now
-      </a>
-      <a href="/#my-order" class="px-5 py-3 rounded-xl border border-neutral-300 bg-white font-semibold">
-        Track My Order
-      </a>
-    </div>
+    <img src="/images/hero.png" class="w-full h-full object-cover" />
   </div>
 </section>
 
-  <!-- About -->
-  <section id="about" class="max-w-6xl mx-auto px-4 py-16 md:py-24">
-    <div class="text-center max-w-2xl mx-auto mb-10">
-      <div class="text-sm tracking-widest uppercase text-brand-red font-semibold mb-2">Our Story</div>
-      <h2 class="text-3xl md:text-4xl font-extrabold">Xiangyee Hunan Cuisine</h2>
-      <p class="mt-3 text-neutral-600 leading-relaxed">
-        Rooted in Hunan's culinary tradition, our kitchen leans into bold chilies, pickled aromatics,
-        and high-heat wok mastery.
-      </p>
+<!-- MENU -->
+<section id="menu" class="max-w-6xl mx-auto px-4 py-16">
+  <h2 class="text-4xl font-extrabold mb-8">Menu</h2>
+  <div id="menu-sections">Loading…</div>
+</section>
+
+<!-- CART DRAWER -->
+<aside id="cart-drawer"
+  class="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white border-l border-neutral-200 shadow-2xl translate-x-full transition-transform duration-300 z-[60] flex flex-col">
+
+  <div class="p-4 border-b flex justify-between">
+    <h3 class="font-bold">Your Cart</h3>
+    <button onclick="closeCart()">✕</button>
+  </div>
+
+  <div id="cart-items" class="flex-1 overflow-y-auto p-4"></div>
+
+  <form id="order-form" class="p-4 border-t space-y-2">
+    <input name="customer_name" required placeholder="Name" class="w-full border p-2 rounded">
+    <input name="customer_phone" required placeholder="Phone (8 or 9xxxxxxx)"
+           pattern="[89][0-9]{7}" maxlength="8" class="w-full border p-2 rounded">
+
+    <select name="order_type" class="w-full border p-2 rounded">
+      <option value="takeaway">Takeaway</option>
+      <option value="dine_in">Dine In</option>
+    </select>
+
+    <input name="table_no" placeholder="Table No (if dine-in)" class="w-full border p-2 rounded">
+    <textarea name="notes" placeholder="Notes" class="w-full border p-2 rounded"></textarea>
+
+    <div class="flex justify-between font-bold">
+      <span>Total</span>
+      <span id="cart-total">$0.00</span>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-8 items-center">
-      <div class="relative">
-        <div class="overflow-hidden rounded-2xl shadow-soft border border-neutral-200">
-          <div id="about-track" class="flex transition-transform duration-500 ease-out">
-            <img class="w-full shrink-0 object-cover h-[320px] md:h-[360px]" src="/images/1stfloor1.jpeg" alt="Xiangyee Interior 1">
-            <img class="w-full shrink-0 object-cover h-[320px] md:h-[360px]" src="/images/1stfloor2.jpeg" alt="Xiangyee Interior 2">
-            <img class="w-full shrink-0 object-cover h-[320px] md:h-[360px]" src="/images/1stfloor3.jpeg" alt="Xiangyee Interior 3">
-            <img class="w-full shrink-0 object-cover h-[320px] md:h-[360px]" src="/images/1stfloor4.jpeg" alt="Xiangyee Interior 4">
-            <img class="w-full shrink-0 object-cover h-[320px] md:h-[360px]" src="/images/1stfloor5.jpeg" alt="Xiangyee Interior 5">
-            <img class="w-full shrink-0 object-cover h-[320px] md:h-[360px]" src="/images/1stfloor6.jpeg" alt="Xiangyee Interior 6">
-            <img class="w-full shrink-0 object-cover h-[320px] md:h-[360px]" src="/images/2ndfloor1.jpeg" alt="Xiangyee 2nd Floor 1">
-            <img class="w-full shrink-0 object-cover h-[320px] md:h-[360px]" src="/images/2ndfloor2.jpeg" alt="Xiangyee 2nd Floor 2">
-            <img class="w-full shrink-0 object-cover h-[320px] md:h-[360px]" src="/images/counter1.jpeg" alt="Xiangyee Counter 1">
-            <img class="w-full shrink-0 object-cover h-[320px] md:h-[360px]" src="/images/counter2.jpeg" alt="Xiangyee Counter 2">
-          </div>
-        </div>
+    <button class="w-full bg-brand-red text-white py-3 rounded font-semibold">
+      Place Order
+    </button>
+  </form>
+</aside>
 
-        <button id="about-prev"
-          class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border border-neutral-200 rounded-full w-10 h-10 grid place-items-center shadow">
-          ‹
-        </button>
-        <button id="about-next"
-          class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white border border-neutral-200 rounded-full w-10 h-10 grid place-items-center shadow">
-          ›
-        </button>
+<div id="drawer-backdrop" class="fixed inset-0 bg-black/40 hidden z-[55]" onclick="closeCart()"></div>
 
-        <div id="about-dots" class="flex gap-2 justify-center mt-3"></div>
-      </div>
+<script>
+/* ================= CONFIG ================= */
+const API_BASE = "/api";
+const $ = s => document.querySelector(s);
+const money = n => `$${Number(n||0).toFixed(2)}`;
+const asInt = v => Number.isFinite(Number(v)) ? Number(v) : null;
 
-      <div class="space-y-4">
-        <p class="leading-relaxed text-neutral-700">
-          Dine in for a lively, convivial experience — or pre-order takeaway with our online ordering system.
-        </p>
-        <div class="flex flex-wrap gap-3">
-          <span class="px-3 py-1 rounded-full bg-red-50 text-red-700 text-sm">Fresh daily</span>
-          <span class="px-3 py-1 rounded-full bg-red-50 text-red-700 text-sm">Family style</span>
-        </div>
-      </div>
-    </div>
-  </section>
+/* ================= STATE ================= */
+let menuItems = [];
+let cart = [];
 
-  <!-- Menu -->
-  <section id="menu" class="bg-white border-y border-neutral-200">
-    <div class="max-w-6xl mx-auto px-4 py-16 md:py-24">
-      <div class="text-center max-w-2xl mx-auto mb-10">
-        <div class="text-sm tracking-widest uppercase text-brand-red font-semibold mb-2">Menu</div>
-        <h2 class="text-3xl md:text-4xl font-extrabold">Spice-forward, wok-fired favourites</h2>
-        <p class="mt-3 text-neutral-600 leading-relaxed">
-          All prices displayed are inclusive of GST.
-        </p>
-      </div>
+/* ================= CART STORAGE ================= */
+function saveCart(){ localStorage.setItem("cart", JSON.stringify(cart)); }
+function loadCart(){
+  try { cart = JSON.parse(localStorage.getItem("cart")) || []; }
+  catch { cart = []; }
 
-      <div class="grid md:grid-cols-2 gap-6" id="menu-sections">
-        <div class="text-neutral-500 text-sm">Loading menu…</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- My Order -->
-  <section id="my-order" class="bg-white border-y border-neutral-200 hidden">
-    <div class="max-w-6xl mx-auto px-4 py-16 md:py-20">
-      <div class="text-center max-w-2xl mx-auto mb-10">
-        <div class="text-sm tracking-widest uppercase text-brand-red font-semibold mb-2">My Order</div>
-        <h2 class="text-3xl md:text-4xl font-extrabold">Order status & collection</h2>
-        <p class="mt-3 text-neutral-600">
-          Your latest order will appear here.
-        </p>
-      </div>
-
-      <div id="my-order-empty" class="rounded-2xl border border-neutral-200 bg-neutral-50 p-8 text-center text-neutral-600">
-        No recent order found on this device.
-      </div>
-
-      <div id="my-order-card" class="hidden rounded-2xl border border-neutral-200 bg-white shadow-soft p-6 md:p-8">
-        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <div class="text-sm text-neutral-500">Order Number</div>
-            <div id="my-order-no" class="text-3xl font-black tracking-widest">—</div>
-          </div>
-
-          <div class="text-left md:text-right">
-            <div class="text-sm text-neutral-500">Status</div>
-            <div id="my-order-status"
-                 class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold bg-neutral-100 text-neutral-800">
-              —
-            </div>
-            <div id="my-order-updated" class="mt-2 text-xs text-neutral-500"></div>
-          </div>
-        </div>
-
-        <hr class="my-6">
-
-        <div class="flex items-center justify-between mb-3">
-          <div class="text-lg font-bold">Items</div>
-          <div class="text-sm text-neutral-600">
-            Total: <span id="my-order-total" class="font-bold">$0.00</span>
-          </div>
-        </div>
-
-        <div id="my-order-items" class="space-y-3"></div>
-
-        <div class="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-          <div class="font-semibold">Collection details</div>
-          <div class="text-sm text-neutral-700 mt-1">
-            Please show your <span class="font-semibold">order number</span> at the counter.
-            When the status shows <span class="font-semibold">Ready to collect</span>, you may pick up your order.
-          </div>
-
-          <button id="my-order-collected-btn"
-            class="hidden mt-4 w-full px-4 py-3 rounded-xl bg-black text-white font-semibold hover:bg-neutral-800">
-            I have collected my order
-          </button>
-
-          <p id="my-order-collected-hint" class="hidden mt-2 text-xs text-neutral-500 text-center">
-            Thank you! Enjoy your meal 😊
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Gallery -->
-  <section id="gallery" class="max-w-6xl mx-auto px-4 py-16 md:py-24">
-        <div class="text-center max-w-2xl mx-auto mb-10">
-          <div class="text-sm tracking-widest uppercase text-brand-red font-semibold mb-2">Gallery</div>
-          <h2 class="text-3xl md:text-4xl font-extrabold">A glimpse into our kitchen</h2>
-          <p class="mt-3 text-neutral-600 leading-relaxed">
-            From sizzling woks to vibrant chilies — scenes that define Xiangyee.
-          </p>
-        </div>
-
-      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <img
-        class="rounded-2xl object-cover h-52 w-full shadow"
-        src="/images/dishes/CuredBeefGarlicSprouts.jpg"
-        alt="Stir-Fried Cured Beef with Garlic Sprouts"
-      />
-
-      <img
-        class="rounded-2xl object-cover h-52 w-full shadow"
-        src="/images/dishes/EggplantCenturyEgg.jpg"
-        alt="Mashed Eggplant with Chili and Century Egg"
-      />
-
-      <img
-        class="rounded-2xl object-cover h-52 w-full shadow"
-        src="/images/dishes/ChickenOldGinger.jpg"
-        alt="Stir-Fried Chicken with Old Ginger"
-      />
-
-      <img
-        class="rounded-2xl object-cover h-52 w-full shadow"
-        src="/images/dishes/FreshYellowBeef.jpg"
-        alt="Stir-Fried Fresh Yellow Beef"
-      />
-    </div>
-  </section>
-
-  <!-- Reservation -->
-  <section id="reserve" class="bg-white border-y border-neutral-200">
-    <div class="max-w-4xl mx-auto px-4 py-16 md:py-24">
-      <div class="text-center max-w-2xl mx-auto mb-10">
-        <div class="text-sm tracking-widest uppercase text-brand-red font-semibold mb-2">Reservations</div>
-        <h2 class="text-3xl md:text-4xl font-extrabold">Book your table</h2>
-        <p class="mt-3 text-neutral-600">For reservations more than 6pax, please call to check.</p>
-      </div>
-
-      <div id="reserve-success" class="hidden rounded-2xl bg-green-50 border border-green-200 p-6 text-green-800 mb-6">
-        Thank you! Your reservation request has been recorded. We will be in touch shortly.
-      </div>
-
-      <form id="reserve-form" class="grid md:grid-cols-2 gap-4">
-        <div class="space-y-2">
-          <label class="text-sm font-medium">Name</label>
-          <input required name="name"
-            pattern="^[A-Za-z\s'.-]{2,50}$"
-            title="Please enter a valid name (letters only). No numbers."
-            class="w-full rounded-xl border border-neutral-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-red"
-            placeholder="e.g., Tan Wei Ling" />
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium">Phone</label>
-          <input required name="phone"
-            pattern="[89][0-9]{7}"
-            maxlength="8"
-            inputmode="numeric"
-            title="Enter a valid 8-digit phone number starting with 8 or 9"
-            class="w-full rounded-xl border border-neutral-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-red"
-            placeholder="e.g., 91234567" />
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium">Date</label>
-          <input required type="date" name="date" id="res-date"
-            class="w-full rounded-xl border border-neutral-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-red" />
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium">Time</label>
-          <select required name="time" id="res-time"
-            class="w-full rounded-xl border border-neutral-300 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-red">
-            <option value="">Select a date first</option>
-          </select>
-          <p id="time-hint" class="text-xs text-neutral-500 mt-1"></p>
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-medium">Pax</label>
-          <input required type="number" min="1" max="6" name="pax" value="2"
-          class="w-full rounded-xl border border-neutral-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-red" />
-        </div>
-
-        <div class="space-y-2 md:col-span-2">
-          <label class="text-sm font-medium">Notes (optional)</label>
-          <textarea name="notes" rows="3"
-            class="w-full rounded-xl border border-neutral-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-red"
-            placeholder="Allergies, high chair, birthday, etc."></textarea>
-        </div>
-
-        <div class="md:col-span-2">
-          <button type="submit"
-            class="px-5 py-3 rounded-xl bg-brand-red text-white font-semibold hover:bg-red-700 shadow-soft">
-            Submit Reservation Request
-          </button>
-        </div>
-      </form>
-    </div>
-  </section>
-
-  <!-- Contact -->
-  <section id="contact" class="max-w-6xl mx-auto px-4 py-16 md:py-24">
-    <div class="text-center max-w-2xl mx-auto mb-10">
-      <div class="text-sm tracking-widest uppercase text-brand-red font-semibold mb-2">Find Us</div>
-      <h2 class="text-3xl md:text-4xl font-extrabold">Contact & Opening Hours</h2>
-      <p class="mt-3 text-neutral-600">Reach out for group bookings and private events.</p>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-8 items-start">
-      <div class="space-y-5">
-        <div class="flex items-start gap-3">
-          <div class="text-brand-red">📍</div>
-          <div><div class="font-semibold">101 Killiney Rd, Singapore 239544</div></div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="text-brand-red">📞</div>
-          <div class="font-semibold">+65 9640 0850</div>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="text-brand-red">✉️</div>
-          <div class="font-semibold">xiangyee2025@gmail.com</div>
-        </div>
-        <div class="flex items-start gap-3">
-          <div class="text-brand-red">⏰</div>
-          <div><div class="font-semibold">Mon–Sun: 11:30–14:30, 17:30–21:30</div></div>
-        </div>
-      </div>
-
-      <div class="rounded-2xl overflow-hidden border border-neutral-200 shadow-soft">
-        <iframe
-          title="Xiangyee Hunan Cuisine Map"
-          class="w-full h-[320px]"
-          style="border:0;"
-          allowfullscreen=""
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.794228729557!2d103.838889!3d1.2981944999999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da19b211018233%3A0xf64cc717f93f5676!2sXiangyee%20Hunan%20Cuisine!5e0!3m2!1sen!2ssg!4v1763951857043!5m2!1sen!2ssg">
-        </iframe>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="border-t border-neutral-200 bg-white">
-    <div class="max-w-6xl mx-auto px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-neutral-600">
-      <div>© <span id="year"></span> Xiangyee Hunan Cuisine. All rights reserved.</div>
-      <div class="flex items-center gap-4">
-        <a href="#about" class="hover:text-brand-red">About</a>
-        <a href="#menu" class="hover:text-brand-red">Menu</a>
-        <a id="my-order-footer" href="#my-order" class="hidden hover:text-brand-red">My Order</a>
-        <a href="#reserve" class="hover:text-brand-red">Reserve</a>
-        <a href="#contact" class="hover:text-brand-red">Contact</a>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Cart Drawer -->
-  <aside id="cart-drawer"
-    class="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white border-l border-neutral-200 shadow-2xl translate-x-full transition-transform duration-300 z-[60] flex flex-col">
-
-    <div class="p-4 border-b border-neutral-200 flex items-center justify-between shrink-0">
-      <h3 class="text-lg font-bold">Your Cart</h3>
-      <button id="cart-close" class="p-2 rounded-lg hover:bg-neutral-100">✕</button>
-    </div>
-
-    <div class="flex-1 overflow-y-auto no-scrollbar">
-      <div id="cart-items" class="p-4 space-y-3">
-        <p class="text-neutral-500 text-sm">Cart is empty. Add dishes to begin.</p>
-      </div>
-
-      <div class="p-4 border-t border-neutral-100">
-        <h4 class="font-bold mb-3">Checkout Details</h4>
-
-        <form id="order-form" class="space-y-2">
-          <input name="customer_name" required placeholder="Your name"
-            class="w-full border border-neutral-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red" />
-
-          <!-- SG 8 digits, starts with 8 or 9 -->
-          <input
-            name="customer_phone"
-            required
-            placeholder="8-digit phone (starts with 8 or 9)"
-            pattern="[89][0-9]{7}"
-            maxlength="8"
-            inputmode="numeric"
-            title="Enter a valid 8-digit phone number starting with 8 or 9"
-            class="w-full border border-neutral-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red"
-          />
-
-          <select name="order_type"
-            class="w-full border border-neutral-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red">
-            <option value="takeaway">Takeaway</option>
-            <option value="dine_in">Dine In</option>
-          </select>
-
-          <input name="table_no" placeholder="Table No (if dine-in)"
-            class="w-full border border-neutral-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red" />
-
-          <textarea name="notes" rows="2" placeholder="Notes"
-            class="w-full border border-neutral-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red"></textarea>
-
-          <div class="flex items-center justify-between font-semibold pt-2">
-            <span>Total</span>
-            <span id="cart-total">$0.00</span>
-          </div>
-
-          <button id="checkout-btn"
-            class="w-full mt-2 px-4 py-3 rounded-xl bg-brand-red text-white font-semibold hover:bg-red-700 disabled:opacity-40"
-            type="submit">
-            Place Order
-          </button>
-
-          <p class="text-xs text-neutral-500 mt-2">
-            After placing your order, please wait for the collection status.
-          </p>
-        </form>
-      </div>
-    </div>
-  </aside>
-
-  <div id="drawer-backdrop" class="fixed inset-0 bg-black/40 z-[55] hidden"></div>
-
-  <!-- JavaScript -->
-  <script>
-  // CONFIG 
-  const API_BASE = "/api";
-  const ASSET_BASE = location.origin;
-
-  // IMAGE URL HELPER
-  function imgUrl(path) {
-  if (!path) return "";
-
-  let p = String(path).trim();
-  if (!p) return "";
-
-  // normalize windows slashes
-  p = p.replace(/\\/g, "/");
-
-  // normalize legacy paths
-  p = p.replace(/^\/?images\/menu\//, "menu/");
-  p = p.replace(/^\/+/, ""); // remove leading /
-
-  // full URL already
-  if (/^https?:\/\//i.test(p)) return p;
-
-  // final expected form: menu/xxx.jpg
-  return `${ASSET_BASE}/${p}`;
+  cart = cart.map(c => ({
+    ...c,
+    id: asInt(c.id),
+    qty: asInt(c.qty),
+    price: Number(c.price)
+  })).filter(c => c.id && c.qty > 0);
 }
 
+/* ================= CART ================= */
+function addToCart(item){
+  const id = asInt(item.id);
+  const price = Number(item.price);
 
-    const money = (n) => `$${Number(n || 0).toFixed(2)}`;
-    const $ = (sel) => document.querySelector(sel);
+  let existing = cart.find(c => c.id === id);
+  if(existing) existing.qty++;
+  else cart.push({ id, name:item.name_en, price, image:item.image_url, qty:1 });
 
-    // STATE 
-    let menuItems = [];
-    let cart = [];
-
-    // CART STORAGE
-    function saveCart() { localStorage.setItem("xiangyee_cart", JSON.stringify(cart)); }
-    function loadCart() {
-      try { cart = JSON.parse(localStorage.getItem("xiangyee_cart")) || []; }
-      catch { cart = []; }
-    }
-
-    // MY ORDER 
-    const LAST_ORDER_KEY = "xiangyee_last_order";
-    let orderPollTimer = null;
-    const ORDER_POLL_MS = 4000;
-
-    function saveLastOrder(o) { localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(o)); }
-    function loadLastOrder() {
-      try { return JSON.parse(localStorage.getItem(LAST_ORDER_KEY)) || null; }
-      catch { return null; }
-    }
-
-    function showMyOrderTab() {
-      document.getElementById("my-order")?.classList.remove("hidden");
-      document.getElementById("my-order-link")?.classList.remove("hidden");
-      document.getElementById("my-order-link-mobile")?.classList.remove("hidden");
-      document.getElementById("my-order-btn")?.classList.remove("hidden");
-      document.getElementById("my-order-footer")?.classList.remove("hidden");
-    }
-    function hideMyOrderTab() {
-      document.getElementById("my-order")?.classList.add("hidden");
-      document.getElementById("my-order-link")?.classList.add("hidden");
-      document.getElementById("my-order-link-mobile")?.classList.add("hidden");
-      document.getElementById("my-order-btn")?.classList.add("hidden");
-      document.getElementById("my-order-footer")?.classList.add("hidden");
-    }
-
-    async function fetchOrderById(orderId) {
-      const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}`);
-      if (!res.ok) throw new Error("Order not found");
-      return res.json();
-    }
-
-    // customer mark as collected (with verification)
-    async function markOrderCollected(orderId) {
-      const last = loadLastOrder();
-      if (!last?.order_no || !last?.customer_phone) {
-        throw new Error("Missing verification info (order_no / customer_phone). Please place an order again.");
-      }
-
-      const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}/collected`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          order_no: last.order_no,
-          customer_phone: last.customer_phone
-        })
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || err.message || "Failed to mark collected");
-      }
-      return true;
-    }
-
-    function setStatusBadge(statusRaw) {
-      const el = document.getElementById("my-order-status");
-      if (!el) return;
-
-      const status = String(statusRaw || "pending").toLowerCase();
-      el.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold";
-
-      if (status === "ready") {
-        el.classList.add("bg-green-100", "text-green-800");
-        el.innerHTML = `Ready to collect <span class="inline-block">✅</span>`;
-      } else if (status === "collected") {
-        el.classList.add("bg-neutral-900", "text-white");
-        el.textContent = "Collected ✅";
-      } else {
-        el.classList.add("bg-amber-100", "text-amber-800");
-        el.textContent = "Preparing";
-      }
-    }
-
-    function stopOrderPolling() {
-      if (orderPollTimer) clearInterval(orderPollTimer);
-      orderPollTimer = null;
-    }
-
-    function startOrderPolling(orderId) {
-      stopOrderPolling();
-      orderPollTimer = setInterval(async () => {
-        try {
-          const o = await fetchOrderById(orderId);
-          renderMyOrderUI(o);
-
-          if (["ready", "collected"].includes(String(o.status || "").toLowerCase())) {
-            stopOrderPolling();
-          }
-        } catch {
-          stopOrderPolling();
-        }
-      }, ORDER_POLL_MS);
-    }
-
-    function getQueryParam(name) {
-      const url = new URL(window.location.href);
-      return url.searchParams.get(name);
-    }
-
-    // RENDER MY ORDER UI
-    function renderMyOrderUI(order) {
-      const empty = document.getElementById("my-order-empty");
-      const card  = document.getElementById("my-order-card");
-
-      const collectedBtn  = document.getElementById("my-order-collected-btn");
-      const collectedHint = document.getElementById("my-order-collected-hint");
-
-      if (!order) {
-        empty?.classList.remove("hidden");
-        card?.classList.add("hidden");
-        return;
-      }
-
-      empty?.classList.add("hidden");
-      card?.classList.remove("hidden");
-
-      document.getElementById("my-order-no").textContent =
-        order.order_no || `#${order.id}`;
-
-      document.getElementById("my-order-total").textContent =
-        money(order.total_amount || 0);
-
-      setStatusBadge(order.status);
-
-      const upd = document.getElementById("my-order-updated");
-      if (upd) {
-        const t = order.updated_at || order.created_at || null;
-        upd.textContent = t ? `Last updated: ${new Date(t).toLocaleString()}` : "";
-      }
-
-      // ITEMS
-      const itemsRoot = document.getElementById("my-order-items");
-      itemsRoot.innerHTML = "";
-
-      const items = Array.isArray(order.items) ? order.items : [];
-      items.forEach(it => {
-        const row = document.createElement("div");
-        row.className =
-          "flex items-center justify-between border-b border-neutral-100 pb-3 last:border-b-0 last:pb-0";
-
-        const name = it.name_en || it.name || `Item #${it.menu_item_id}`;
-        const qty  = it.quantity || 1;
-        const unit = it.unit_price != null ? Number(it.unit_price) : null;
-
-        row.innerHTML = `
-          <div>
-            <div class="font-medium">${name}</div>
-            ${unit != null ? `<div class="text-xs text-neutral-500">${money(unit)} each</div>` : ""}
-          </div>
-          <div class="font-semibold">x${qty}</div>
-        `;
-        itemsRoot.appendChild(row);
-      });
-
-      // COLLECTED BUTTON LOGIC 
-      collectedBtn?.classList.add("hidden");
-      collectedHint?.classList.add("hidden");
-
-      const status = String(order.status || "").toLowerCase();
-
-      if (status === "ready") {
-        collectedBtn.classList.remove("hidden");
-        collectedBtn.disabled = false;
-        collectedBtn.textContent = "I have collected my order";
-
-        collectedBtn.onclick = async () => {
-          try {
-            collectedBtn.disabled = true;
-            collectedBtn.textContent = "Updating…";
-
-            await markOrderCollected(order.id);
-
-            // RECEIPT PAGE REDIRECT
-            window.location.href = `${window.location.origin}/receipt.html?order_id=${encodeURIComponent(order.id)}`;
-          } catch (e) {
-            alert(e.message || "Failed to update");
-            collectedBtn.disabled = false;
-            collectedBtn.textContent = "I have collected my order";
-          }
-        };
-      }
-
-      if (status === "collected") {
-        collectedHint.classList.remove("hidden");
-        stopOrderPolling();
-      }
-    }
-
-    async function loadMyOrderFromDevice() {
-      const qid = getQueryParam("order_id");
-      const last = loadLastOrder();
-      const orderId = qid || last?.order_id;
-
-      if (!orderId) {
-        hideMyOrderTab();
-        renderMyOrderUI(null);
-        stopOrderPolling();
-        return;
-      }
-
-      showMyOrderTab();
-
-      try {
-        const o = await fetchOrderById(orderId);
-
-        // keep localStorage synced + keep phone if alrdy have
-        saveLastOrder({
-          order_id: o.id,
-          order_no: o.order_no,
-          customer_phone: last?.customer_phone || o.customer_phone || null
-        });
-
-        renderMyOrderUI(o);
-
-        const s = String(o.status || "").toLowerCase();
-        if (!["ready", "collected"].includes(s)) startOrderPolling(o.id);
-        else stopOrderPolling();
-      } catch {
-        hideMyOrderTab();
-        renderMyOrderUI(null);
-        stopOrderPolling();
-      }
-    }
-
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) loadMyOrderFromDevice();
-    });
-
-    // CART LOGIC 
-    function addToCart(item) {
-  const existing = cart.find(c => c.id === item.id);
-  if (existing) existing.qty++;
-  else cart.push({
-    id: item.id,
-    name: item.name_en,
-    price: Number(item.price),
-    image_url: item.image_url,
-    qty: 1
-  });
-
-  saveCart();
-  renderCart();
-  updateCartCount();
-  openCart();
+  saveCart(); renderCart(); openCart();
 }
 
-
-    function updateQty(id, delta) {
-      const it = cart.find(c => c.id === id);
-      if (!it) return;
-      it.qty += delta;
-      if (it.qty <= 0) cart = cart.filter(c => c.id !== id);
-
-      saveCart();
-      renderCart();
-      updateCartCount();
-    }
-
-    function cartTotal() { return cart.reduce((sum, c) => sum + Number(c.price) * c.qty, 0); }
-
-    function updateCartCount() {
-      const count = cart.reduce((s, i) => s + i.qty, 0);
-      $("#cart-count").textContent = count;
-    }
-
-    // MENU
-    async function fetchMenu() {
-      const res = await fetch(`${API_BASE}/menu`);
-      if (!res.ok) throw new Error("Failed to fetch menu");
-      menuItems = await res.json();
-      renderMenu(menuItems);
-    }
-
-    function renderMenu(items) {
-  const root = document.getElementById("menu-sections");
+function renderCart(){
+  const root = $("#cart-items");
   root.innerHTML = "";
 
-  const grouped = items.reduce((acc, item) => {
-    acc[item.category] ||= [];
-    acc[item.category].push(item);
-    return acc;
-  }, {});
-
-  Object.keys(grouped).forEach(cat => {
-    const section = document.createElement("div");
-    section.className = "space-y-4";
-
-    section.innerHTML = `
-      <h3 class="text-xl font-bold">${cat}</h3>
-      <div class="space-y-3"></div>
-    `;
-
-    const list = section.querySelector("div");
-
-    grouped[cat].forEach(item => {
-      const card = document.createElement("div");
-      card.className =
-        "p-4 rounded-2xl bg-white border border-neutral-200 shadow-soft flex justify-between gap-4";
-
-      card.innerHTML = `
-        <div class="flex gap-3">
-          <img
-            src="${imgUrl(item.image_url)}"
-            class="w-20 h-20 rounded-xl object-cover border border-neutral-200"
-            alt="${item.name_en}"
-          />
-
-          <div>
-            <div class="font-semibold text-lg">${item.name_en}</div>
-            <div class="text-sm text-neutral-600">${item.name_cn}</div>
-          </div>
-        </div>
-
-        <div class="text-right">
-          <div class="font-bold">$${Number(item.price).toFixed(2)}</div>
-          <button class="mt-2 px-3 py-1.5 rounded-lg bg-brand-red text-white text-sm font-semibold hover:bg-red-700">
-            Add to Cart
-          </button>
-        </div>
-      `;
-
-      card.querySelector("button").onclick = () => addToCart(item);
-      list.appendChild(card);
-    });
-
-    root.appendChild(section);
-  });
-}
-    
-
-    // CART UI
-    function renderCart() {
-  const cartRoot = $("#cart-items");
-  const totalRoot = $("#cart-total");
-  cartRoot.innerHTML = "";
-
-  if (!cart.length) {
-    cartRoot.innerHTML = `<div class="text-sm text-neutral-500">Cart is empty.</div>`;
-    totalRoot.textContent = money(0);
-    $("#checkout-btn").disabled = true;
+  if(!cart.length){
+    root.innerHTML = "<p class='text-sm text-neutral-500'>Cart empty</p>";
+    $("#cart-total").textContent = money(0);
     return;
   }
 
-  cart.forEach(c => {
+  cart.forEach(c=>{
     const row = document.createElement("div");
-    row.className =
-      "flex items-center justify-between gap-3 py-2 border-b border-neutral-100";
-
+    row.className="flex justify-between py-2 border-b";
     row.innerHTML = `
-      <div class="flex items-center gap-3 flex-1">
-        <img
-          src="${imgUrl(c.image_url)}"
-          class="w-12 h-12 rounded-lg object-cover border border-neutral-200"
-          alt="${c.name}"
-        />
-        <div>
-          <div class="font-medium">${c.name}</div>
-          <div class="text-xs text-neutral-500">${money(c.price)} each</div>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <button class="px-2 py-1 rounded bg-neutral-100">-</button>
-        <div class="w-6 text-center">${c.qty}</div>
-        <button class="px-2 py-1 rounded bg-neutral-100">+</button>
-      </div>
-
-      <div class="font-semibold w-20 text-right">
-        ${money(c.price * c.qty)}
-      </div>
+      <div>${c.name} x${c.qty}</div>
+      <div>${money(c.price*c.qty)}</div>
     `;
-
-    const [minusBtn, plusBtn] = row.querySelectorAll("button");
-    minusBtn.onclick = () => updateQty(c.id, -1);
-    plusBtn.onclick = () => updateQty(c.id, +1);
-
-    cartRoot.appendChild(row);
+    root.appendChild(row);
   });
 
-  totalRoot.textContent = money(cartTotal());
-  $("#checkout-btn").disabled = false;
+  $("#cart-total").textContent = money(cart.reduce((s,c)=>s+c.price*c.qty,0));
 }
 
-    // DRAWER UI
-    function openCart() {
-      $("#cart-drawer").classList.remove("translate-x-full");
-      $("#drawer-backdrop").classList.remove("hidden");
-      document.body.classList.add("overflow-hidden");
-    }
-    function closeCart() {
-      $("#cart-drawer").classList.add("translate-x-full");
-      $("#drawer-backdrop").classList.add("hidden");
-      document.body.classList.remove("overflow-hidden");
-    }
+function openCart(){
+  $("#cart-drawer").classList.remove("translate-x-full");
+  $("#drawer-backdrop").classList.remove("hidden");
+}
+function closeCart(){
+  $("#cart-drawer").classList.add("translate-x-full");
+  $("#drawer-backdrop").classList.add("hidden");
+}
 
-    function bindUI() {
-      $("#mobile-btn").onclick = () => $("#mobile-nav").classList.toggle("hidden");
-      $("#mobile-nav").querySelectorAll("a").forEach(a => a.onclick = () => $("#mobile-nav").classList.add("hidden"));
-      $("#cart-btn").onclick = openCart;
-      $("#cart-close").onclick = closeCart;
-      $("#drawer-backdrop").onclick = closeCart;
-    }
+/* ================= MENU ================= */
+async function fetchMenu(){
+  const res = await fetch(`${API_BASE}/menu`);
+  menuItems = await res.json();
+  renderMenu();
+}
 
-    // CREATE ORDER 
-async function submitOrder(e) {
+function renderMenu(){
+  const root = $("#menu-sections");
+  root.innerHTML = "";
+
+  menuItems.forEach(item=>{
+    const card = document.createElement("div");
+    card.className="border rounded p-4 mb-3 flex justify-between";
+    card.innerHTML = `
+      <div>
+        <div class="font-semibold">${item.name_en}</div>
+        <div class="text-sm text-neutral-500">${item.name_cn}</div>
+      </div>
+      <div class="text-right">
+        <div class="font-bold">${money(item.price)}</div>
+        <button class="mt-2 bg-brand-red text-white px-3 py-1 rounded">Add</button>
+      </div>
+    `;
+    card.querySelector("button").onclick=()=>addToCart(item);
+    root.appendChild(card);
+  });
+}
+
+/* ================= ORDER ================= */
+$("#order-form").addEventListener("submit", async e=>{
   e.preventDefault();
-  if (!cart.length) return alert("Cart empty!");
 
-  const form = e.target;
+  if(!cart.length) return alert("Cart empty");
 
-  // Name validation
-  const customer_name = form.customer_name.value.trim();
-  if (!/^[A-Za-z\s'.-]{2,50}$/.test(customer_name)) {
-    alert("Please enter a valid name (letters only). No numbers.");
-    form.customer_name.focus();
-    return;
-  }
-
-  // Phone validation
-  const customer_phone = form.customer_phone.value.trim().replace(/\s+/g, "");
-  if (!/^[89]\d{7}$/.test(customer_phone)) {
-    alert("Please enter a valid 8-digit phone number starting with 8 or 9.");
-    form.customer_phone.focus();
-    return;
-  }
-
+  const f = e.target;
   const payload = {
-    customer_name,  
-    customer_phone,  
-    order_type: form.order_type.value,
-    table_no: form.table_no.value.trim() || null,
-    notes: form.notes.value.trim() || null,
-    items: cart.map(c => ({ menu_item_id: c.id, quantity: c.qty }))
+    customer_name: f.customer_name.value.trim(),
+    customer_phone: f.customer_phone.value.trim(),
+    order_type: f.order_type.value,
+    table_no: f.table_no.value || null,
+    notes: f.notes.value || null,
+    items: cart.map(c=>({ menu_item_id:c.id, quantity:c.qty }))
   };
 
-  let res, rawText;
-  try {
-    res = await fetch(`${API_BASE}/orders`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    rawText = await res.text(); //read raw response
-  } catch (err) {
-    console.error("Network error:", err);
-    alert("Network error: backend not reachable. Is your server running on port 4000?");
-    return;
-  }
-
-  if (!res.ok) {
-    console.error("Order API error:", res.status, rawText);
-    alert(`Unable to place order (${res.status}).\n\n${rawText}`);
-    return;
-  }
-
-  const data = JSON.parse(rawText); 
-
-  // Save last order (for collect verification)
-  saveLastOrder({
-    order_id: data.order_id,
-    order_no: data.order_no,
-    customer_phone
+  const res = await fetch(`${API_BASE}/orders`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(payload)
   });
 
-  cart = [];
+  if(!res.ok){
+    alert(await res.text());
+    return;
+  }
+
+  cart=[];
   saveCart();
   renderCart();
-  updateCartCount();
-  form.reset();
   closeCart();
+  alert("Order placed successfully!");
+});
 
-  showMyOrderTab();
-
-  const url = `${window.location.origin}${window.location.pathname}?order_id=${encodeURIComponent(data.order_id)}#my-order`;
-  window.open(url, "_blank");
-
-  window.location.hash = "my-order";
-  loadMyOrderFromDevice();
-}
-
-
-    // RESERVATION
-    async function submitReservation(e) {
-      e.preventDefault();
-      const form = e.target;
-
-      // Validate reservation phone
-      const phone = form.phone.value.trim().replace(/\s+/g, "");
-      if (!/^[89]\d{7}$/.test(phone)) {
-        alert("Please enter a valid 8-digit phone number starting with 8 or 9.");
-        form.phone.focus();
-        return;
-      }
-
-      const name = form.name.value.trim();
-
-      // allow letters, spaces, apostrophe, dot, hyphen
-      if (!/^[A-Za-z\s'.-]{2,50}$/.test(name)) {
-        alert("Please enter a valid name (letters only). No numbers.");
-        form.name.focus();
-        return;
-      }
-
-
-      // max 6 pax
-      const pax = Number(form.pax.value);
-      if (!Number.isFinite(pax) || pax < 1 || pax > 6) {
-        alert("Reservation is limited to max 6 pax. For bigger groups, please call to check.");
-        form.pax.focus();
-        return;
-      }
-
-      const payload = {
-        customer_name: name,
-        customer_phone: phone,
-        reservation_date: form.date.value,
-        reservation_time: form.time.value,
-        pax,
-        notes: form.notes.value.trim() || null
-      };
-
-      const res = await fetch(`${API_BASE}/reservations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(()=> ({}));
-
-        const phoneIssue =
-          (Array.isArray(err?.error?.issues) && err.error.issues.some(i => i.path?.includes("customer_phone"))) ||
-          (typeof err?.message === "string" && err.message.toLowerCase().includes("phone")) ||
-          (typeof err?.error === "string" && err.error.toLowerCase().includes("phone"));
-
-        if (phoneIssue) {
-          alert("Please enter a valid 8-digit phone number starting with 8 or 9.");
-          form.phone.focus();
-          return;
-        }
-
-        alert("Reservation failed. Please check your details and try again.");
-        return;
-      }
-
-      form.reset();
-      alert("✅ Reservation is confirmed!");
-    }
-
-    // RESERVATION SLOT UI
-    const RES_SLOTS = (() => {
-      const slots = [];
-      function pushRange(start, end) {
-        let [sh, sm] = start.split(":").map(Number);
-        let [eh, em] = end.split(":").map(Number);
-        let cur = sh * 60 + sm;
-        const stop = eh * 60 + em;
-        while (cur <= stop) {
-          const hh = String(Math.floor(cur / 60)).padStart(2, "0");
-          const mm = String(cur % 60).padStart(2, "0");
-          slots.push(`${hh}:${mm}`);
-          cur += 30;
-        }
-      }
-      pushRange("11:30", "14:30");
-      pushRange("17:30", "19:00");
-      return slots;
-    })();
-
-    async function loadAvailableTimes(dateStr) {
-      const timeSelect = document.getElementById("res-time");
-      const hint = document.getElementById("time-hint");
-      timeSelect.innerHTML = `<option value="">Loading...</option>`;
-      hint.textContent = "";
-
-      try {
-        const res = await fetch(`${API_BASE}/reservations/availability?date=${encodeURIComponent(dateStr)}`);
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(`HTTP ${res.status}: ${txt}`);
-        }
-
-        const data = await res.json();
-        const maxPerSlot = Number(data.maxPerSlot || 0);
-        const countsArr = Array.isArray(data.counts) ? data.counts : [];
-
-        const bookedMap = {};
-        countsArr.forEach(row => { bookedMap[row.reservation_time] = Number(row.booked || 0); });
-
-        let slots = [...RES_SLOTS];
-
-        const todayStr = new Date().toISOString().slice(0, 10);
-        if (dateStr === todayStr) {
-          const now = new Date();
-          const nowMins = now.getHours() * 60 + now.getMinutes();
-          slots = slots.filter(t => {
-            const [hh, mm] = t.split(":").map(Number);
-            return (hh * 60 + mm) > nowMins;
-          });
-        }
-
-        const slotsWithCapacity = slots.filter(t => (bookedMap[t] || 0) < maxPerSlot);
-
-        if (!slotsWithCapacity.length) {
-          timeSelect.innerHTML = `<option value="">No slots left for this date</option>`;
-          hint.textContent = "Please pick another date.";
-          return;
-        }
-
-        timeSelect.innerHTML =
-          `<option value="">Select a time</option>` +
-          slotsWithCapacity.map(t => {
-            const booked = bookedMap[t] || 0;
-            const remaining = Math.max(0, maxPerSlot - booked);
-            return `<option value="${t}">${t} (${remaining} table${remaining !== 1 ? "s" : ""} left)</option>`;
-          }).join("");
-
-        const totalRemaining = slotsWithCapacity.reduce((sum, t) => {
-          const booked = bookedMap[t] || 0;
-          return sum + Math.max(0, maxPerSlot - booked);
-        }, 0);
-
-        hint.textContent = `Total tables left this day: ${totalRemaining}`;
-      } catch (err) {
-        console.error(err);
-        timeSelect.innerHTML = `<option value="">Failed to load slots</option>`;
-        hint.textContent = "Backend not running or API error.";
-      }
-    }
-
-    function bindReservationSlotsUI() {
-      const dateInput = document.querySelector('#reserve-form input[name="date"]');
-      const timeSelect = document.getElementById("res-time");
-
-      const todayStr = new Date().toISOString().slice(0,10);
-      dateInput.min = todayStr;
-
-      const maxDate = new Date();
-      maxDate.setDate(maxDate.getDate() + 30);
-      dateInput.max = maxDate.toISOString().slice(0,10);
-
-      dateInput.addEventListener("change", () => {
-        const d = dateInput.value;
-        if (!d) {
-          timeSelect.innerHTML = `<option value="">Select a date first</option>`;
-          return;
-        }
-        loadAvailableTimes(d);
-      });
-    }
-
-    function init() {
-      $("#year").textContent = new Date().getFullYear();
-      loadCart();
-      renderCart();
-      updateCartCount();
-      bindUI();
-      bindReservationSlotsUI();
-
-      fetchMenu().catch(err => {
-        console.error(err);
-        $("#menu-sections").innerHTML = `
-          <div class="text-red-600 text-sm">
-            Menu loading failed. Make sure backend is running on port 4000,
-            and open this site using Live Server (http://), not file://
-          </div>`;
-      });
-
-      $("#order-form").addEventListener("submit", submitOrder);
-      $("#reserve-form").addEventListener("submit", submitReservation);
-
-      loadMyOrderFromDevice();
-    }
-
-    init();
-
-    // ABOUT MOVING GALLERY 
-    (function setupAboutGallery(){
-      const track = document.getElementById("about-track");
-      if (!track) return;
-
-      const slides = Array.from(track.querySelectorAll("img"));
-      const prevBtn = document.getElementById("about-prev");
-      const nextBtn = document.getElementById("about-next");
-      const dotsWrap = document.getElementById("about-dots");
-
-      let i = 0;
-      let timer = null;
-
-      slides.forEach((_, idx) => {
-        const d = document.createElement("button");
-        d.className = "w-2.5 h-2.5 rounded-full bg-neutral-300";
-        d.onclick = () => go(idx);
-        dotsWrap.appendChild(d);
-      });
-
-      function renderDots() {
-        [...dotsWrap.children].forEach((d, idx) => {
-          d.classList.toggle("bg-neutral-900", idx === i);
-          d.classList.toggle("bg-neutral-300", idx !== i);
-        });
-      }
-
-      function go(idx) {
-        i = (idx + slides.length) % slides.length;
-        track.style.transform = `translateX(-${i * 100}%)`;
-        renderDots();
-        restart();
-      }
-
-      function next(){ go(i + 1); }
-      function prev(){ go(i - 1); }
-
-      function restart() {
-        if (timer) clearInterval(timer);
-        timer = setInterval(next, 3000);
-      }
-
-      prevBtn?.addEventListener("click", prev);
-      nextBtn?.addEventListener("click", next);
-
-      const wrapper = track.closest(".relative");
-      wrapper.addEventListener("mouseenter", () => timer && clearInterval(timer));
-      wrapper.addEventListener("mouseleave", restart);
-
-      go(0);
-    })();
-  </script>
+/* ================= INIT ================= */
+loadCart();
+renderCart();
+fetchMenu();
+</script>
 
 </body>
 </html>
