@@ -1,6 +1,6 @@
 // routes/orders.routes.js
 const express = require("express");
-const { poolPromise, sql } = require("../db");
+const { pool } = require("../db");
 const { z } = require("zod");
 const { requireAuth } = require("../middleware/auth");
 
@@ -25,17 +25,8 @@ const OrderSchema = z.object({
     .min(1),
 });
 
-/* =========================
-   OPTIONAL: VERIFY "COLLECTED" CALL
-   (recommended for customer-facing endpoints)
-
-   If you DON'T want this verification, you can remove
-   CollectedVerifySchema + the checks in /:id/collected.
-========================= */
 const CollectedVerifySchema = z.object({
-  // customer will have order_no shown in UI
   order_no: z.string().min(3),
-  // basic phone check
   customer_phone: z.string().min(3),
 });
 
@@ -52,116 +43,111 @@ router.post("/", async (req, res) => {
   const { customer_name, customer_phone, order_type, table_no, notes, items } =
     parsed.data;
 
-  let transaction;
+  const client = await pool.connect();
 
   try {
-    const pool = await poolPromise;
-    transaction = new sql.Transaction(pool);
+    await client.query("BEGIN");
 
-    await transaction.begin(sql.ISOLATION_LEVEL.SERIALIZABLE);
+    // ====== DAILY ORDER NUMBER (SERIALIZABLE-like using row lock) ======
+    // 1) ensure row exists + increment atomically
+    const seqUpsert = await client.query(
+      `
+      INSERT INTO daily_order_seq (seq_date, last_seq)
+      VALUES (CURRENT_DATE, 1)
+      ON CONFLICT (seq_date)
+      DO UPDATE SET last_seq = daily_order_seq.last_seq + 1
+      RETURNING last_seq;
+      `
+    );
 
-    // ====== DAILY ORDER NUMBER ======
-    const seqReq = new sql.Request(transaction);
-
-    await seqReq.query(`
-      IF EXISTS (
-        SELECT 1 FROM dbo.daily_order_seq WITH (UPDLOCK, HOLDLOCK)
-        WHERE seq_date = CAST(GETDATE() AS DATE)
-      )
-      BEGIN
-        UPDATE dbo.daily_order_seq
-        SET last_seq = last_seq + 1
-        WHERE seq_date = CAST(GETDATE() AS DATE);
-      END
-      ELSE
-      BEGIN
-        INSERT INTO dbo.daily_order_seq (seq_date, last_seq)
-        VALUES (CAST(GETDATE() AS DATE), 1);
-      END
-    `);
-
-    const seqRes = await seqReq.query(`
-      SELECT last_seq FROM dbo.daily_order_seq
-      WHERE seq_date = CAST(GETDATE() AS DATE)
-    `);
-
-    const seq = seqRes.recordset?.[0]?.last_seq;
+    const seq = seqUpsert.rows?.[0]?.last_seq;
     if (!seq) throw new Error("Failed to generate daily sequence");
 
-    const dateRes = await seqReq.query(
-      `SELECT FORMAT(GETDATE(), 'yyyyMMdd') AS ymd`
+    // 2) format YYYYMMDD in Postgres
+    const ymdRes = await client.query(
+      `SELECT to_char(NOW(), 'YYYYMMDD') AS ymd`
     );
-    const ymd = dateRes.recordset?.[0]?.ymd;
-
+    const ymd = ymdRes.rows?.[0]?.ymd;
     const orderNo = `${ymd}-${String(seq).padStart(3, "0")}`;
 
     // ====== INSERT ORDER ======
-    const orderInsert = await new sql.Request(transaction)
-      .input("order_no", sql.NVarChar, orderNo)
-      .input("customer_name", sql.NVarChar, customer_name)
-      .input("customer_phone", sql.NVarChar, customer_phone)
-      .input("order_type", sql.NVarChar, order_type)
-      .input("table_no", sql.NVarChar, table_no || null)
-      .input("notes", sql.NVarChar, notes || null)
-      .query(`
-        INSERT INTO dbo.orders
-          (order_no, customer_name, customer_phone, order_type, table_no, notes, total_amount)
-        OUTPUT INSERTED.id
-        VALUES
-          (@order_no, @customer_name, @customer_phone, @order_type, @table_no, @notes, 0)
-      `);
+    const orderInsert = await client.query(
+      `
+      INSERT INTO orders
+        (order_no, customer_name, customer_phone, order_type, table_no, notes, total_amount)
+      VALUES
+        ($1, $2, $3, $4, $5, $6, 0)
+      RETURNING id;
+      `,
+      [
+        orderNo,
+        customer_name,
+        customer_phone,
+        order_type,
+        table_no || null,
+        notes || null,
+      ]
+    );
 
-    const orderId = orderInsert.recordset[0].id;
+    const orderId = orderInsert.rows?.[0]?.id;
+    if (!orderId) throw new Error("Failed to create order");
 
-    // ====== INSERT ITEMS ======
+    // ====== INSERT ITEMS + TOTAL ======
     let total = 0;
 
     for (const it of items) {
-      const menuRes = await new sql.Request(transaction)
-        .input("mid", sql.Int, it.menu_item_id)
-        .query(
-          "SELECT price FROM dbo.menu_items WHERE id=@mid AND is_available=1"
-        );
+      const menuRes = await client.query(
+        `
+        SELECT price
+        FROM menu_items
+        WHERE id = $1
+          AND is_available = TRUE
+        `,
+        [it.menu_item_id]
+      );
 
-      const menuItem = menuRes.recordset[0];
+      const menuItem = menuRes.rows?.[0];
       if (!menuItem) throw new Error("Menu item not found");
 
       const unitPrice = Number(menuItem.price);
       const lineTotal = unitPrice * it.quantity;
       total += lineTotal;
 
-      await new sql.Request(transaction)
-        .input("order_id", sql.Int, orderId)
-        .input("menu_item_id", sql.Int, it.menu_item_id)
-        .input("quantity", sql.Int, it.quantity)
-        .input("unit_price", sql.Decimal(10, 2), unitPrice)
-        .input("line_total", sql.Decimal(10, 2), lineTotal)
-        .query(`
-          INSERT INTO dbo.order_items
-            (order_id, menu_item_id, quantity, unit_price, line_total)
-          VALUES
-            (@order_id, @menu_item_id, @quantity, @unit_price, @line_total)
-        `);
+      await client.query(
+        `
+        INSERT INTO order_items
+          (order_id, menu_item_id, quantity, unit_price, line_total)
+        VALUES
+          ($1, $2, $3, $4, $5)
+        `,
+        [orderId, it.menu_item_id, it.quantity, unitPrice, lineTotal]
+      );
     }
 
-    await new sql.Request(transaction)
-      .input("total_amount", sql.Decimal(10, 2), total)
-      .input("id", sql.Int, orderId)
-      .query("UPDATE dbo.orders SET total_amount=@total_amount WHERE id=@id");
+    // ====== UPDATE ORDER TOTAL ======
+    await client.query(
+      `
+      UPDATE orders
+      SET total_amount = $1, updated_at = NOW()
+      WHERE id = $2
+      `,
+      [total, orderId]
+    );
 
-    await transaction.commit();
+    await client.query("COMMIT");
 
-    // ✅ RETURN ORDER NUMBER FOR CUSTOMER
-    res.status(201).json({
+    return res.status(201).json({
       order_id: orderId,
       order_no: orderNo,
       total_amount: total,
     });
   } catch (e) {
     try {
-      if (transaction) await transaction.rollback();
+      await client.query("ROLLBACK");
     } catch {}
-    res.status(400).json({ error: e.message });
+    return res.status(400).json({ error: e.message });
+  } finally {
+    client.release();
   }
 });
 
@@ -171,34 +157,31 @@ router.post("/", async (req, res) => {
 ========================= */
 router.get("/track/:orderNo", async (req, res) => {
   try {
-    const pool = await poolPromise;
     const { orderNo } = req.params;
 
-    const r = await pool
-      .request()
-      .input("order_no", sql.NVarChar, orderNo)
-      .query(`
-        SELECT order_no, status, created_at, updated_at
-        FROM dbo.orders
-        WHERE order_no=@order_no
-      `);
+    const r = await pool.query(
+      `
+      SELECT order_no, status, created_at, updated_at
+      FROM orders
+      WHERE order_no = $1
+      `,
+      [orderNo]
+    );
 
-    const order = r.recordset[0];
+    const order = r.rows?.[0];
     if (!order) return res.status(404).json({ error: "Order not found" });
 
-    res.json(order);
+    return res.json(order);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message });
   }
 });
 
 // MARK COLLECTED (customer clicks "I collected")
 router.post("/:id/collected", async (req, res) => {
   try {
-    const pool = await poolPromise;
     const id = parseInt(req.params.id, 10);
 
-    // --- verification (recommended) ---
     const parsed = CollectedVerifySchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
@@ -206,14 +189,16 @@ router.post("/:id/collected", async (req, res) => {
     const { order_no, customer_phone } = parsed.data;
 
     // Load order
-    const orderRes = await pool
-      .request()
-      .input("id", sql.Int, id)
-      .query(
-        "SELECT id, order_no, customer_phone, status FROM dbo.orders WHERE id=@id"
-      );
+    const orderRes = await pool.query(
+      `
+      SELECT id, order_no, customer_phone, status
+      FROM orders
+      WHERE id = $1
+      `,
+      [id]
+    );
 
-    const order = orderRes.recordset[0];
+    const order = orderRes.rows?.[0];
     if (!order) return res.status(404).json({ error: "Order not found" });
 
     // Verify identity
@@ -233,122 +218,126 @@ router.post("/:id/collected", async (req, res) => {
       });
     }
 
-    const r = await pool
-      .request()
-      .input("id", sql.Int, id)
-      .query(`
-        UPDATE dbo.orders
-        SET status='collected', updated_at=SYSDATETIME()
-        WHERE id=@id
-      `);
+    const upd = await pool.query(
+      `
+      UPDATE orders
+      SET status = 'collected', updated_at = NOW()
+      WHERE id = $1
+      `,
+      [id]
+    );
 
-    if (r.rowsAffected[0] === 0) {
+    if (upd.rowCount === 0) {
       return res.status(404).json({ error: "Order not found" });
     }
 
     // Return updated order (with items)
-    const updatedOrderRes = await pool
-      .request()
-      .input("id", sql.Int, id)
-      .query("SELECT * FROM dbo.orders WHERE id=@id");
+    const updatedOrderRes = await pool.query(
+      `SELECT * FROM orders WHERE id = $1`,
+      [id]
+    );
 
-    const itemsRes = await pool
-      .request()
-      .input("id", sql.Int, id)
-      .query(`
-        SELECT oi.*, mi.name_en, mi.name_cn
-        FROM dbo.order_items oi
-        JOIN dbo.menu_items mi ON mi.id = oi.menu_item_id
-        WHERE oi.order_id=@id
-      `);
+    const itemsRes = await pool.query(
+      `
+      SELECT
+        oi.*,
+        mi.name_en,
+        mi.name_cn
+      FROM order_items oi
+      JOIN menu_items mi ON mi.id = oi.menu_item_id
+      WHERE oi.order_id = $1
+      ORDER BY oi.id ASC
+      `,
+      [id]
+    );
 
-    res.json({ ...updatedOrderRes.recordset[0], items: itemsRes.recordset });
+    return res.json({ ...updatedOrderRes.rows[0], items: itemsRes.rows });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message });
   }
 });
 
 /* =========================
    PUBLIC: GET ORDER BY ID (TESTING)
+   GET /api/orders/:id
 ========================= */
 router.get("/:id", async (req, res) => {
   try {
-    const pool = await poolPromise;
     const id = parseInt(req.params.id, 10);
 
-    const orderRes = await pool
-      .request()
-      .input("id", sql.Int, id)
-      .query("SELECT * FROM dbo.orders WHERE id=@id");
+    const orderRes = await pool.query(
+      `SELECT * FROM orders WHERE id = $1`,
+      [id]
+    );
 
-    const order = orderRes.recordset[0];
+    const order = orderRes.rows?.[0];
     if (!order) return res.status(404).json({ error: "Order not found" });
 
-    const itemsRes = await pool
-      .request()
-      .input("id", sql.Int, id)
-      .query(`
-        SELECT oi.*, mi.name_en, mi.name_cn
-        FROM dbo.order_items oi
-        JOIN dbo.menu_items mi ON mi.id = oi.menu_item_id
-        WHERE oi.order_id=@id
-      `);
+    const itemsRes = await pool.query(
+      `
+      SELECT
+        oi.*,
+        mi.name_en,
+        mi.name_cn
+      FROM order_items oi
+      JOIN menu_items mi ON mi.id = oi.menu_item_id
+      WHERE oi.order_id = $1
+      ORDER BY oi.id ASC
+      `,
+      [id]
+    );
 
-    res.json({ ...order, items: itemsRes.recordset });
+    return res.json({ ...order, items: itemsRes.rows });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message });
   }
 });
 
 /* =========================
    ADMIN: LIST ORDERS
+   GET /api/orders/admin
 ========================= */
-router.get("/", requireAuth, async (req, res) => {
+router.get("/admin", requireAuth, async (req, res) => {
   try {
-    const pool = await poolPromise;
-    const r = await pool
-      .request()
-      .query("SELECT * FROM dbo.orders ORDER BY created_at DESC");
-
-    res.json(r.recordset);
+    const r = await pool.query(
+      `SELECT * FROM orders ORDER BY created_at DESC`
+    );
+    return res.json(r.rows);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message });
   }
 });
 
 /* =========================
    ADMIN: UPDATE STATUS
-   (pending / ready / collected)
+   PUT /api/orders/:id
 ========================= */
 router.put("/:id", requireAuth, async (req, res) => {
   try {
-    const pool = await poolPromise;
     const id = parseInt(req.params.id, 10);
     const { status } = req.body;
 
-    // ✅ include collected
     const allowed = ["pending", "ready", "collected"];
     if (!allowed.includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
     }
 
-    const r = await pool
-      .request()
-      .input("status", sql.NVarChar, status)
-      .input("id", sql.Int, id)
-      .query(`
-        UPDATE dbo.orders
-        SET status=@status, updated_at=SYSDATETIME()
-        WHERE id=@id
-      `);
+    const r = await pool.query(
+      `
+      UPDATE orders
+      SET status = $1, updated_at = NOW()
+      WHERE id = $2
+      `,
+      [status, id]
+    );
 
-    if (r.rowsAffected[0] === 0) {
+    if (r.rowCount === 0) {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    res.json({ message: "Order status updated" });
+    return res.json({ message: "Order status updated" });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message });
   }
 });
 

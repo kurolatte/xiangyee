@@ -1,5 +1,5 @@
 const express = require("express");
-const { poolPromise, sql } = require("../db");
+const { pool } = require("../db");
 const { z } = require("zod");
 const { requireAuth } = require("../middleware/auth");
 
@@ -16,13 +16,14 @@ const ReservationSchema = z.object({
   notes: z.string().optional().nullable()
 });
 
-// POST /api/reservations 
+// --------------------
+// POST /api/reservations
+// --------------------
 router.post("/", async (req, res) => {
   const parsed = ReservationSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
   try {
-    const pool = await poolPromise;
     const r = parsed.data;
 
     // Past checks
@@ -56,68 +57,74 @@ router.post("/", async (req, res) => {
     }
 
     // Cap check
-    const capResult = await pool.request()
-      .input("d", sql.Date, r.reservation_date)
-      .input("t", sql.Time, r.reservation_time)
-      .query(`
-        SELECT COUNT(*) AS cnt
-        FROM dbo.reservations
-        WHERE reservation_date = @d
-          AND reservation_time = @t
-      `);
+    const capResult = await pool.query(
+      `
+      SELECT COUNT(*)::int AS cnt
+      FROM reservations
+      WHERE reservation_date = $1::date
+        AND reservation_time = $2::time
+      `,
+      [r.reservation_date, r.reservation_time]
+    );
 
-    const existingCount = Number(capResult.recordset?.[0]?.cnt || 0);
+    const existingCount = Number(capResult.rows?.[0]?.cnt || 0);
     if (existingCount >= MAX_RES_PER_SLOT) {
       return res.status(400).json({
         error: "This time slot is fully booked. Please choose another time."
       });
     }
 
-    const insertResult = await pool.request()
-      .input("customer_name", sql.NVarChar, r.customer_name)
-      .input("customer_phone", sql.NVarChar, r.customer_phone)
-      .input("reservation_date", sql.Date, r.reservation_date)
-      .input("reservation_time", sql.Time, r.reservation_time)
-      .input("pax", sql.Int, r.pax)
-      .input("notes", sql.NVarChar, r.notes || null)
-      .query(`
-        INSERT INTO dbo.reservations
-          (customer_name, customer_phone, reservation_date, reservation_time, pax, notes)
-        VALUES
-          (@customer_name, @customer_phone, @reservation_date, @reservation_time, @pax, @notes);
+    // Insert + return id
+    const insertResult = await pool.query(
+      `
+      INSERT INTO reservations
+        (customer_name, customer_phone, reservation_date, reservation_time, pax, notes)
+      VALUES
+        ($1, $2, $3::date, $4::time, $5::int, $6)
+      RETURNING id;
+      `,
+      [
+        r.customer_name,
+        r.customer_phone,
+        r.reservation_date,
+        r.reservation_time,
+        r.pax,
+        r.notes || null
+      ]
+    );
 
-        SELECT SCOPE_IDENTITY() AS id;
-      `);
-
-    return res.status(201).json({ reservation_id: insertResult.recordset[0].id });
+    return res.status(201).json({ reservation_id: insertResult.rows[0].id });
   } catch (e) {
     console.error("POST /reservations error:", e);
     return res.status(500).json({ error: e.message });
   }
 });
 
+// --------------------
 // GET /api/reservations/availability
 // returns counts per time slot + maxPerSlot
+// --------------------
 router.get("/availability", async (req, res) => {
   try {
-    const pool = await poolPromise;
     const { date } = req.query;
     if (!date) return res.status(400).json({ error: "date is required (YYYY-MM-DD)" });
 
-    const result = await pool.request()
-      .input("d", sql.Date, date)
-      .query(`
-        SELECT
-          CONVERT(varchar(5), reservation_time, 108) AS reservation_time, -- HH:MM
-          COUNT(*) AS booked
-        FROM dbo.reservations
-        WHERE reservation_date = @d
-        GROUP BY reservation_time
-      `);
+    const result = await pool.query(
+      `
+      SELECT
+        to_char(reservation_time, 'HH24:MI') AS reservation_time,
+        COUNT(*)::int AS booked
+      FROM reservations
+      WHERE reservation_date = $1::date
+      GROUP BY reservation_time
+      ORDER BY reservation_time ASC
+      `,
+      [date]
+    );
 
     return res.json({
       maxPerSlot: MAX_RES_PER_SLOT,
-      counts: result.recordset
+      counts: result.rows
     });
   } catch (e) {
     console.error("GET /reservations/availability error:", e);
@@ -125,128 +132,111 @@ router.get("/availability", async (req, res) => {
   }
 });
 
-// PUBLIC: availability for a date (counts per time)
-router.get("/availability", async (req, res) => {
-  try {
-    const pool = await poolPromise;
-    const { date } = req.query;
-    if (!date) return res.status(400).json({ error: "date is required (YYYY-MM-DD)" });
-
-    const result = await pool.request()
-      .input("d", sql.Date, date)
-      .query(`
-        SELECT
-          CONVERT(varchar(5), reservation_time, 108) AS reservation_time, -- HH:MM
-          COUNT(*) AS booked
-        FROM dbo.reservations
-        WHERE reservation_date = @d
-        GROUP BY reservation_time
-      `);
-
-    res.json({
-      maxPerSlot: MAX_RES_PER_SLOT,
-      counts: result.recordset
-    });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-
-// PUBLIC: list reservations (by date)
+// --------------------
+// PUBLIC: list reservations (optional by date)
+// GET /api/reservations?date=YYYY-MM-DD
+// --------------------
 router.get("/", async (req, res) => {
   try {
-    const pool = await poolPromise;
     const { date } = req.query;
 
-    const request = pool.request();
-
-    let q = `
-      SELECT
-        id,
-        customer_name,
-        customer_phone,
-        CONVERT(varchar(10), reservation_date, 23) AS reservation_date,   -- YYYY-MM-DD
-        CONVERT(varchar(5),  reservation_time, 108) AS reservation_time,  -- HH:MM
-        pax,
-        notes,
-        status,
-        created_at,
-        updated_at
-      FROM dbo.reservations
-      ORDER BY created_at DESC, id DESC
-    `;
-
     if (date) {
-      q = `
+      const result = await pool.query(
+        `
         SELECT
           id,
           customer_name,
           customer_phone,
-          CONVERT(varchar(10), reservation_date, 23) AS reservation_date,
-          CONVERT(varchar(5),  reservation_time, 108) AS reservation_time,
+          to_char(reservation_date, 'YYYY-MM-DD') AS reservation_date,
+          to_char(reservation_time, 'HH24:MI') AS reservation_time,
           pax,
           notes,
           status,
           created_at,
           updated_at
-        FROM dbo.reservations
-        WHERE reservation_date = @date
+        FROM reservations
+        WHERE reservation_date = $1::date
         ORDER BY reservation_time ASC, id ASC
-      `;
-      request.input("date", sql.Date, date);
+        `,
+        [date]
+      );
+      return res.json(result.rows);
     }
 
-    const result = await request.query(q);
-    res.json(result.recordset);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-
-// ADMIN: list reservations
-router.get("/admin", requireAuth, async (req, res) => {
-  try {
-    const pool = await poolPromise;
-    const r = await pool.request().query(`
+    const result = await pool.query(
+      `
       SELECT
         id,
         customer_name,
         customer_phone,
-        CONVERT(varchar(10), reservation_date, 23) AS reservation_date,
-        CONVERT(varchar(5),  reservation_time, 108) AS reservation_time,
+        to_char(reservation_date, 'YYYY-MM-DD') AS reservation_date,
+        to_char(reservation_time, 'HH24:MI') AS reservation_time,
         pax,
         notes,
         status,
         created_at,
         updated_at
-      FROM dbo.reservations
+      FROM reservations
       ORDER BY created_at DESC, id DESC
-    `);
-    res.json(r.recordset);
+      `
+    );
+
+    return res.json(result.rows);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// --------------------
+// ADMIN: list reservations
+// GET /api/reservations/admin
+// --------------------
+router.get("/admin", requireAuth, async (req, res) => {
+  try {
+    const r = await pool.query(
+      `
+      SELECT
+        id,
+        customer_name,
+        customer_phone,
+        to_char(reservation_date, 'YYYY-MM-DD') AS reservation_date,
+        to_char(reservation_time, 'HH24:MI') AS reservation_time,
+        pax,
+        notes,
+        status,
+        created_at,
+        updated_at
+      FROM reservations
+      ORDER BY created_at DESC, id DESC
+      `
+    );
+    res.json(r.rows);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-
-// PATCH /api/reservations/:id/status 
+// --------------------
+// PATCH /api/reservations/:id/status
+// --------------------
 router.patch("/:id/status", async (req, res) => {
   try {
-    const pool = await poolPromise;
     const id = parseInt(req.params.id, 10);
     const { status } = req.body;
 
-    const allowed = ["pending","confirmed","seated","completed","cancelled"];
+    const allowed = ["pending", "confirmed", "seated", "completed", "cancelled"];
     if (!allowed.includes(status)) return res.status(400).json({ error: "Invalid status" });
 
-    const r = await pool.request()
-      .input("status", sql.NVarChar, status)
-      .input("id", sql.Int, id)
-      .query("UPDATE dbo.reservations SET status=@status, updated_at=SYSDATETIME() WHERE id=@id");
+    const r = await pool.query(
+      `
+      UPDATE reservations
+      SET status = $1, updated_at = NOW()
+      WHERE id = $2
+      `,
+      [status, id]
+    );
 
-    if (r.rowsAffected[0] === 0) return res.status(404).json({ error: "Reservation not found" });
+    if (r.rowCount === 0) return res.status(404).json({ error: "Reservation not found" });
     return res.json({ message: "Reservation status updated" });
   } catch (e) {
     console.error("PATCH /reservations/:id/status error:", e);
@@ -254,24 +244,27 @@ router.patch("/:id/status", async (req, res) => {
   }
 });
 
-// PUT /api/reservations/:id  (ADMIN)
+// --------------------
+// PUT /api/reservations/:id (ADMIN)
+// --------------------
 router.put("/:id", requireAuth, async (req, res) => {
   try {
     const { status } = req.body || {};
-    const allowed = ["pending","confirmed","seated","completed","cancelled"];
+    const allowed = ["pending", "confirmed", "seated", "completed", "cancelled"];
     if (!allowed.includes(status)) return res.status(400).json({ error: "Invalid status" });
 
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input("id", sql.Int, parseInt(req.params.id, 10))
-      .input("st", sql.NVarChar, status)
-      .query(`
-        UPDATE dbo.reservations
-        SET status=@st, updated_at=SYSDATETIME()
-        WHERE id=@id
-      `);
+    const id = parseInt(req.params.id, 10);
 
-    if (result.rowsAffected[0] === 0) return res.status(404).json({ error: "Reservation not found" });
+    const result = await pool.query(
+      `
+      UPDATE reservations
+      SET status = $1, updated_at = NOW()
+      WHERE id = $2
+      `,
+      [status, id]
+    );
+
+    if (result.rowCount === 0) return res.status(404).json({ error: "Reservation not found" });
     return res.json({ message: "updated" });
   } catch (e) {
     console.error("PUT /reservations/:id error:", e);

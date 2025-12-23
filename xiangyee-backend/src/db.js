@@ -1,29 +1,13 @@
-const sql = require("mssql/msnodesqlv8");
+const { Pool } = require("pg");
 require("dotenv").config();
 
-const driver = "ODBC Driver 17 for SQL Server"; 
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is missing. Set it in Render Environment variables.");
+}
 
-const connectionString = `
-Driver={${driver}};
-Server=localhost\\SQLEXPRESS;
-Database=${process.env.SQL_DATABASE};
-UID=${process.env.SQL_USER};
-PWD=${process.env.SQL_PASSWORD};
-Trusted_Connection=No;
-Encrypt=No;
-`;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
-const poolPromise = new sql.ConnectionPool({
-  connectionString,
-  options: {
-    trustServerCertificate: true
-  }
-})
-  .connect()
-  .then(pool => {
-    console.log("✅ Connected to SQL Server (ODBC local driver)");
-    return pool;
-  })
-  .catch(err => console.error("❌ DB Connection Failed:", err));
-
-module.exports = { sql, poolPromise };
+module.exports = { pool };

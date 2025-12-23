@@ -1,30 +1,15 @@
 const express = require("express");
-const { poolPromise, sql } = require("../db");
+const { pool } = require("../db");
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const pool = await poolPromise;
     const { category } = req.query;
 
-    let query = `
-      SELECT
-        id,
-        name_en,
-        name_cn,
-        price,
-        category,
-        image_url
-      FROM dbo.menu_items
-      WHERE is_available = 1
-      ORDER BY category, name_en
-    `;
-
-    const request = pool.request();
-
     if (category) {
-      query = `
+      const result = await pool.query(
+        `
         SELECT
           id,
           name_en,
@@ -32,19 +17,35 @@ router.get("/", async (req, res) => {
           price,
           category,
           image_url
-        FROM dbo.menu_items
-        WHERE category = @category
-          AND is_available = 1
+        FROM menu_items
+        WHERE category = $1
+          AND is_available = TRUE
         ORDER BY name_en
-      `;
-      request.input("category", sql.NVarChar, category);
+        `,
+        [category]
+      );
+      return res.json(result.rows);
     }
 
-    const result = await request.query(query);
-    res.json(result.recordset);
+    const result = await pool.query(
+      `
+      SELECT
+        id,
+        name_en,
+        name_cn,
+        price,
+        category,
+        image_url
+      FROM menu_items
+      WHERE is_available = TRUE
+      ORDER BY category, name_en
+      `
+    );
+
+    return res.json(result.rows);
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
+    console.error("GET /menu error:", e);
+    return res.status(500).json({ error: e.message });
   }
 });
 
