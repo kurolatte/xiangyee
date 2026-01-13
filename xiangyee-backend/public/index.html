@@ -472,8 +472,56 @@
 
   <div id="drawer-backdrop" class="fixed inset-0 bg-black/40 z-[55] hidden"></div>
 
+<!-- Mock Gateway Modal -->
+<div id="gateway-modal" class="fixed inset-0 z-[80] hidden">
+  <div id="gateway-backdrop" class="absolute inset-0 bg-black/50"></div>
+
+  <div class="relative mx-auto mt-24 w-[92%] max-w-md rounded-2xl bg-white shadow-2xl border border-neutral-200 overflow-hidden">
+    <div class="p-4 border-b border-neutral-200 flex items-center justify-between">
+      <div class="font-bold">Mock Payment Gateway</div>
+      <button id="gateway-close" class="p-2 rounded-lg hover:bg-neutral-100">✕</button>
+    </div>
+
+    <div class="p-5 space-y-4">
+      <div class="rounded-xl bg-neutral-50 border border-neutral-200 p-4">
+        <div class="text-sm text-neutral-500">Order ID</div>
+        <div id="gw-order-id" class="font-mono font-semibold break-all">—</div>
+
+        <div class="mt-3 text-sm text-neutral-500">Amount</div>
+        <div id="gw-amount" class="text-2xl font-black">$0.00</div>
+      </div>
+
+      <div class="space-y-2 text-sm text-neutral-600">
+        <div class="flex items-center justify-between">
+          <span>Payment method</span>
+          <span class="font-semibold">Card (Demo)</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>Status</span>
+          <span id="gw-status" class="font-semibold text-amber-700">Awaiting payment</span>
+        </div>
+      </div>
+
+      <button id="gw-pay"
+        class="w-full px-4 py-3 rounded-xl bg-brand-red text-white font-semibold hover:bg-red-700">
+        Pay Now
+      </button>
+
+      <button id="gw-cancel"
+        class="w-full px-4 py-3 rounded-xl bg-white border border-neutral-300 font-semibold hover:border-brand-red hover:text-brand-red">
+        Cancel
+      </button>
+
+      <p class="text-xs text-neutral-500">
+        Demo only. No real payment is processed.
+      </p>
+    </div>
+  </div>
+</div>
+
+
   <!-- JavaScript -->
-  <script>
+<script>
   // CONFIG
   const API_BASE = "/api";
   const ASSET_BASE = location.origin;
@@ -498,17 +546,27 @@
   let cart = [];
 
   // CART STORAGE (HARDENED: ensure numeric ids/qty/price)
-  function saveCart() { localStorage.setItem("xiangyee_cart", JSON.stringify(cart)); }
+  function saveCart() {
+    localStorage.setItem("xiangyee_cart", JSON.stringify(cart));
+  }
   function loadCart() {
     try {
       const raw = JSON.parse(localStorage.getItem("xiangyee_cart")) || [];
-      cart = raw.map(c => ({
-        id: Number(c.id),
-        name: c.name,
-        price: Number(c.price),
-        image_url: c.image_url || c.image || null,
-        qty: Number(c.qty)
-      })).filter(c => Number.isInteger(c.id) && Number.isFinite(c.price) && Number.isInteger(c.qty) && c.qty > 0);
+      cart = raw
+        .map((c) => ({
+          id: Number(c.id),
+          name: c.name,
+          price: Number(c.price),
+          image_url: c.image_url || c.image || null,
+          qty: Number(c.qty),
+        }))
+        .filter(
+          (c) =>
+            Number.isInteger(c.id) &&
+            Number.isFinite(c.price) &&
+            Number.isInteger(c.qty) &&
+            c.qty > 0
+        );
     } catch {
       cart = [];
     }
@@ -519,10 +577,15 @@
   let orderPollTimer = null;
   const ORDER_POLL_MS = 4000;
 
-  function saveLastOrder(o) { localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(o)); }
+  function saveLastOrder(o) {
+    localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(o));
+  }
   function loadLastOrder() {
-    try { return JSON.parse(localStorage.getItem(LAST_ORDER_KEY)) || null; }
-    catch { return null; }
+    try {
+      return JSON.parse(localStorage.getItem(LAST_ORDER_KEY)) || null;
+    } catch {
+      return null;
+    }
   }
 
   function showMyOrderTab() {
@@ -550,17 +613,22 @@
   async function markOrderCollected(orderId) {
     const last = loadLastOrder();
     if (!last?.order_no || !last?.customer_phone) {
-      throw new Error("Missing verification info (order_no / customer_phone). Please place an order again.");
+      throw new Error(
+        "Missing verification info (order_no / customer_phone). Please place an order again."
+      );
     }
 
-    const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}/collected`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        order_no: last.order_no,
-        customer_phone: last.customer_phone
-      })
-    });
+    const res = await fetch(
+      `${API_BASE}/orders/${encodeURIComponent(orderId)}/collected`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_no: last.order_no,
+          customer_phone: last.customer_phone,
+        }),
+      }
+    );
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -574,7 +642,8 @@
     if (!el) return;
 
     const status = String(statusRaw || "pending").toLowerCase();
-    el.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold";
+    el.className =
+      "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold";
 
     if (status === "ready") {
       el.classList.add("bg-green-100", "text-green-800");
@@ -596,14 +665,16 @@
   function startOrderPolling(orderId) {
     stopOrderPolling();
     orderPollTimer = setInterval(async () => {
-      // ✅ stop polling when tab is hidden
+      // stop polling when tab hidden
       if (document.hidden) return;
 
       try {
         const o = await fetchOrderById(orderId);
         renderMyOrderUI(o);
 
-        if (["ready", "collected"].includes(String(o.status || "").toLowerCase())) {
+        if (
+          ["ready", "collected"].includes(String(o.status || "").toLowerCase())
+        ) {
           stopOrderPolling();
         }
       } catch {
@@ -620,9 +691,9 @@
   // RENDER MY ORDER UI
   function renderMyOrderUI(order) {
     const empty = document.getElementById("my-order-empty");
-    const card  = document.getElementById("my-order-card");
+    const card = document.getElementById("my-order-card");
 
-    const collectedBtn  = document.getElementById("my-order-collected-btn");
+    const collectedBtn = document.getElementById("my-order-collected-btn");
     const collectedHint = document.getElementById("my-order-collected-hint");
 
     if (!order) {
@@ -637,8 +708,9 @@
     document.getElementById("my-order-no").textContent =
       order.order_no || `#${order.id}`;
 
-    document.getElementById("my-order-total").textContent =
-      money(order.total_amount || 0);
+    document.getElementById("my-order-total").textContent = money(
+      order.total_amount || 0
+    );
 
     setStatusBadge(order.status);
 
@@ -653,13 +725,13 @@
     itemsRoot.innerHTML = "";
 
     const items = Array.isArray(order.items) ? order.items : [];
-    items.forEach(it => {
+    items.forEach((it) => {
       const row = document.createElement("div");
       row.className =
         "flex items-center justify-between border-b border-neutral-100 pb-3 last:border-b-0 last:pb-0";
 
       const name = it.name_en || it.name || `Item #${it.menu_item_id}`;
-      const qty  = it.quantity || 1;
+      const qty = it.quantity || 1;
       const unit = it.unit_price != null ? Number(it.unit_price) : null;
 
       row.innerHTML = `
@@ -690,8 +762,9 @@
 
           await markOrderCollected(order.id);
 
-          // RECEIPT PAGE REDIRECT
-          window.location.href = `${window.location.origin}/receipt.html?order_id=${encodeURIComponent(order.id)}`;
+          window.location.href = `${window.location.origin}/receipt.html?order_id=${encodeURIComponent(
+            order.id
+          )}`;
         } catch (e) {
           alert(e.message || "Failed to update");
           collectedBtn.disabled = false;
@@ -723,11 +796,10 @@
     try {
       const o = await fetchOrderById(orderId);
 
-      // keep localStorage synced + keep phone if already have
       saveLastOrder({
         order_id: o.id,
         order_no: o.order_no,
-        customer_phone: last?.customer_phone || o.customer_phone || null
+        customer_phone: last?.customer_phone || o.customer_phone || null,
       });
 
       renderMyOrderUI(o);
@@ -742,7 +814,7 @@
     }
   }
 
-  // ✅ Pause polling when tab hidden; resume refresh when visible
+  // Pause polling when tab hidden; resume refresh when visible
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       stopOrderPolling();
@@ -751,20 +823,21 @@
     }
   });
 
-  // CART LOGIC (HARDENED: ensure numeric id)
+  // CART LOGIC
   function addToCart(item) {
     const id = Number(item.id);
     if (!Number.isInteger(id)) return;
 
-    const existing = cart.find(c => c.id === id);
+    const existing = cart.find((c) => c.id === id);
     if (existing) existing.qty++;
-    else cart.push({
-      id,
-      name: item.name_en,
-      price: Number(item.price),
-      image_url: item.image_url,
-      qty: 1
-    });
+    else
+      cart.push({
+        id,
+        name: item.name_en,
+        price: Number(item.price),
+        image_url: item.image_url,
+        qty: 1,
+      });
 
     saveCart();
     renderCart();
@@ -774,17 +847,19 @@
 
   function updateQty(id, delta) {
     const nid = Number(id);
-    const it = cart.find(c => c.id === nid);
+    const it = cart.find((c) => c.id === nid);
     if (!it) return;
     it.qty += delta;
-    if (it.qty <= 0) cart = cart.filter(c => c.id !== nid);
+    if (it.qty <= 0) cart = cart.filter((c) => c.id !== nid);
 
     saveCart();
     renderCart();
     updateCartCount();
   }
 
-  function cartTotal() { return cart.reduce((sum, c) => sum + Number(c.price) * c.qty, 0); }
+  function cartTotal() {
+    return cart.reduce((sum, c) => sum + Number(c.price) * c.qty, 0);
+  }
 
   function updateCartCount() {
     const count = cart.reduce((s, i) => s + i.qty, 0);
@@ -809,7 +884,7 @@
       return acc;
     }, {});
 
-    Object.keys(grouped).forEach(cat => {
+    Object.keys(grouped).forEach((cat) => {
       const section = document.createElement("div");
       section.className = "space-y-4";
 
@@ -820,7 +895,7 @@
 
       const list = section.querySelector("div");
 
-      grouped[cat].forEach(item => {
+      grouped[cat].forEach((item) => {
         const card = document.createElement("div");
         card.className =
           "p-4 rounded-2xl bg-white border border-neutral-200 shadow-soft flex justify-between gap-4";
@@ -832,7 +907,6 @@
               class="w-20 h-20 rounded-xl object-cover border border-neutral-200"
               alt="${item.name_en}"
             />
-
             <div>
               <div class="font-semibold text-lg">${item.name_en}</div>
               <div class="text-sm text-neutral-600">${item.name_cn || ""}</div>
@@ -868,7 +942,7 @@
       return;
     }
 
-    cart.forEach(c => {
+    cart.forEach((c) => {
       const row = document.createElement("div");
       row.className =
         "flex items-center justify-between gap-3 py-2 border-b border-neutral-100";
@@ -920,98 +994,168 @@
     document.body.classList.remove("overflow-hidden");
   }
 
+  // --------------------
+  // MOCK GATEWAY (IN-PAGE)
+  // --------------------
+  let pendingOrderId = null;
+  let pendingAmount = 0;
+
+  function openGateway(orderId, amount) {
+    pendingOrderId = orderId;
+    pendingAmount = Number(amount || 0);
+
+    document.getElementById("gw-order-id").textContent = String(orderId);
+    document.getElementById("gw-amount").textContent = money(pendingAmount);
+
+    const statusEl = document.getElementById("gw-status");
+    statusEl.textContent = "Awaiting payment";
+    statusEl.className = "font-semibold text-amber-700";
+
+    document.getElementById("gateway-modal").classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
+  }
+
+  function closeGateway() {
+    document.getElementById("gateway-modal").classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
+  }
+
   function bindUI() {
     $("#mobile-btn").onclick = () => $("#mobile-nav").classList.toggle("hidden");
-    $("#mobile-nav").querySelectorAll("a").forEach(a => a.onclick = () => $("#mobile-nav").classList.add("hidden"));
+    $("#mobile-nav")
+      .querySelectorAll("a")
+      .forEach((a) => (a.onclick = () => $("#mobile-nav").classList.add("hidden")));
     $("#cart-btn").onclick = openCart;
     $("#cart-close").onclick = closeCart;
     $("#drawer-backdrop").onclick = closeCart;
+
+    // Gateway bindings
+    document.getElementById("gateway-backdrop").onclick = closeGateway;
+    document.getElementById("gateway-close").onclick = closeGateway;
+    document.getElementById("gw-cancel").onclick = closeGateway;
+
+    document.getElementById("gw-pay").onclick = async () => {
+      const payBtn = document.getElementById("gw-pay");
+      const statusEl = document.getElementById("gw-status");
+
+      statusEl.textContent = "Processing...";
+      statusEl.className = "font-semibold text-neutral-700";
+      payBtn.disabled = true;
+
+      setTimeout(() => {
+        statusEl.textContent = "Payment success ✅";
+        statusEl.className = "font-semibold text-green-700";
+
+        setTimeout(() => {
+          closeGateway();
+
+          // after payment -> show my order
+          showMyOrderTab();
+          window.location.hash = "my-order";
+          loadMyOrderFromDevice();
+
+          payBtn.disabled = false;
+        }, 600);
+      }, 900);
+    };
   }
 
-  // CREATE ORDER (FIXED: table_no only for dine_in; no new tab; update URL safely)
+  // CREATE ORDER -> show mock gateway BEFORE navigating to #my-order
   async function submitOrder(e) {
-  e.preventDefault();
-  if (!cart.length) return alert("Cart empty!");
+    e.preventDefault();
+    if (!cart.length) return alert("Cart empty!");
 
-  const form = e.target;
+    const form = e.target;
 
-  const customer_name = form.customer_name.value.trim();
-  if (!/^[A-Za-z\s'.-]{2,50}$/.test(customer_name)) {
-    alert("Please enter a valid name (letters only). No numbers.");
-    form.customer_name.focus();
-    return;
-  }
+    const customer_name = form.customer_name.value.trim();
+    if (!/^[A-Za-z\s'.-]{2,50}$/.test(customer_name)) {
+      alert("Please enter a valid name (letters only). No numbers.");
+      form.customer_name.focus();
+      return;
+    }
 
-  const customer_phone = form.customer_phone.value.trim().replace(/\s+/g, "");
-  if (!/^[89]\d{7}$/.test(customer_phone)) {
-    alert("Please enter a valid 8-digit phone number starting with 8 or 9.");
-    form.customer_phone.focus();
-    return;
-  }
+    const customer_phone = form.customer_phone.value.trim().replace(/\s+/g, "");
+    if (!/^[89]\d{7}$/.test(customer_phone)) {
+      alert("Please enter a valid 8-digit phone number starting with 8 or 9.");
+      form.customer_phone.focus();
+      return;
+    }
 
-  const orderType = form.order_type.value;
-  const tableNoRaw = (form.table_no.value || "").trim();
+    const orderType = form.order_type.value;
+    const tableNoRaw = (form.table_no.value || "").trim();
 
-  const payload = {
-    customer_name,
-    customer_phone,
-    order_type: orderType,
-    // ✅ only send table_no if dine_in and not empty
-    table_no: (orderType === "dine_in" && tableNoRaw) ? tableNoRaw : null,
-    notes: (form.notes.value || "").trim() || null,
-    // ✅ ensure menu_item_id is number
-    items: cart.map(c => ({ menu_item_id: Number(c.id), quantity: Number(c.qty) }))
-  };
+    const payload = {
+      customer_name,
+      customer_phone,
+      order_type: orderType,
+      table_no: orderType === "dine_in" && tableNoRaw ? tableNoRaw : null,
+      notes: (form.notes.value || "").trim() || null,
+      items: cart.map((c) => ({
+        menu_item_id: Number(c.id),
+        quantity: Number(c.qty),
+      })),
+    };
 
-  let res, rawText;
-  try {
-    res = await fetch(`${API_BASE}/orders`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+    const amount = cartTotal(); // capture before we clear cart
+
+    let res, rawText;
+    try {
+      res = await fetch(`${API_BASE}/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      rawText = await res.text();
+    } catch (err) {
+      console.error("Network error:", err);
+      alert("Network error: backend not reachable.");
+      return;
+    }
+
+    if (!res.ok) {
+      console.error("Order API error:", res.status, rawText);
+      alert(`Unable to place order (${res.status}).\n\n${rawText}`);
+      return;
+    }
+
+    let data = {};
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = {};
+    }
+
+    if (!data?.order_id) {
+      console.error("Order API success but missing order_id:", data);
+      alert("Order created but order ID missing. Please try again.");
+      return;
+    }
+
+    // Save last order (for collect verification)
+    saveLastOrder({
+      order_id: data.order_id,
+      order_no: data.order_no,
+      customer_phone,
     });
 
-    rawText = await res.text();
-  } catch (err) {
-    console.error("Network error:", err);
-    alert("Network error: backend not reachable.");
+    // update URL with order_id (no reload)
+    const url = new URL(window.location.href);
+    url.searchParams.set("order_id", data.order_id);
+    history.replaceState({}, "", url.toString());
+
+    // clear cart + close drawer
+    cart = [];
+    saveCart();
+    renderCart();
+    updateCartCount();
+    form.reset();
+    closeCart();
+
+    // show gateway first
+    openGateway(data.order_id, amount);
     return;
   }
-
-  if (!res.ok) {
-    console.error("Order API error:", res.status, rawText);
-    alert(`Unable to place order (${res.status}).\n\n${rawText}`);
-    return;
-  }
-
-  let data = {};
-  try { data = JSON.parse(rawText); } catch { data = {}; }
-
-  // ✅ Safety check
-  if (!data?.order_id) {
-    console.error("Order API success but missing order_id:", data);
-    alert("Order created but order ID missing. Please try again.");
-    return;
-  }
-
-  // Save last order (for collect verification)
-  saveLastOrder({
-    order_id: data.order_id,
-    order_no: data.order_no,
-    customer_phone
-  });
-
-  // ✅ Redirect to mock payment gateway (project/demo)
-  // Use backend order_id as the payment reference
-  const amount = cartTotal().toFixed(2);
-  console.log("Redirecting to mock gateway...", { orderId: data.order_id, amount });
-
-  window.location.assign(
-    `mock-gateway.html?orderId=${encodeURIComponent(data.order_id)}&amount=${encodeURIComponent(amount)}`
-  );
-  return;
-}
-
 
   // RESERVATION
   async function submitReservation(e) {
@@ -1034,7 +1178,9 @@
 
     const pax = Number(form.pax.value);
     if (!Number.isFinite(pax) || pax < 1 || pax > 6) {
-      alert("Reservation is limited to max 6 pax. For bigger groups, please call to check.");
+      alert(
+        "Reservation is limited to max 6 pax. For bigger groups, please call to check."
+      );
       form.pax.focus();
       return;
     }
@@ -1045,21 +1191,24 @@
       reservation_date: form.date.value,
       reservation_time: form.time.value,
       pax,
-      notes: form.notes.value.trim() || null
+      notes: form.notes.value.trim() || null,
     };
 
     const res = await fetch(`${API_BASE}/reservations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(()=> ({}));
+      const err = await res.json().catch(() => ({}));
       const phoneIssue =
-        (Array.isArray(err?.error?.issues) && err.error.issues.some(i => i.path?.includes("customer_phone"))) ||
-        (typeof err?.message === "string" && err.message.toLowerCase().includes("phone")) ||
-        (typeof err?.error === "string" && err.error.toLowerCase().includes("phone"));
+        (Array.isArray(err?.error?.issues) &&
+          err.error.issues.some((i) => i.path?.includes("customer_phone"))) ||
+        (typeof err?.message === "string" &&
+          err.message.toLowerCase().includes("phone")) ||
+        (typeof err?.error === "string" &&
+          err.error.toLowerCase().includes("phone"));
 
       if (phoneIssue) {
         alert("Please enter a valid 8-digit phone number starting with 8 or 9.");
@@ -1073,7 +1222,6 @@
 
     form.reset();
 
-    // ✅ use your success banner instead of only alert
     const ok = document.getElementById("reserve-success");
     ok?.classList.remove("hidden");
     setTimeout(() => ok?.classList.add("hidden"), 6000);
@@ -1108,7 +1256,9 @@
     hint.textContent = "";
 
     try {
-      const res = await fetch(`${API_BASE}/reservations/availability?date=${encodeURIComponent(dateStr)}`);
+      const res = await fetch(
+        `${API_BASE}/reservations/availability?date=${encodeURIComponent(dateStr)}`
+      );
       if (!res.ok) {
         const txt = await res.text();
         throw new Error(`HTTP ${res.status}: ${txt}`);
@@ -1119,7 +1269,9 @@
       const countsArr = Array.isArray(data.counts) ? data.counts : [];
 
       const bookedMap = {};
-      countsArr.forEach(row => { bookedMap[row.reservation_time] = Number(row.booked || 0); });
+      countsArr.forEach((row) => {
+        bookedMap[row.reservation_time] = Number(row.booked || 0);
+      });
 
       let slots = [...RES_SLOTS];
 
@@ -1127,13 +1279,13 @@
       if (dateStr === todayStr) {
         const now = new Date();
         const nowMins = now.getHours() * 60 + now.getMinutes();
-        slots = slots.filter(t => {
+        slots = slots.filter((t) => {
           const [hh, mm] = t.split(":").map(Number);
-          return (hh * 60 + mm) > nowMins;
+          return hh * 60 + mm > nowMins;
         });
       }
 
-      const slotsWithCapacity = slots.filter(t => (bookedMap[t] || 0) < maxPerSlot);
+      const slotsWithCapacity = slots.filter((t) => (bookedMap[t] || 0) < maxPerSlot);
 
       if (!slotsWithCapacity.length) {
         timeSelect.innerHTML = `<option value="">No slots left for this date</option>`;
@@ -1143,11 +1295,15 @@
 
       timeSelect.innerHTML =
         `<option value="">Select a time</option>` +
-        slotsWithCapacity.map(t => {
-          const booked = bookedMap[t] || 0;
-          const remaining = Math.max(0, maxPerSlot - booked);
-          return `<option value="${t}">${t} (${remaining} table${remaining !== 1 ? "s" : ""} left)</option>`;
-        }).join("");
+        slotsWithCapacity
+          .map((t) => {
+            const booked = bookedMap[t] || 0;
+            const remaining = Math.max(0, maxPerSlot - booked);
+            return `<option value="${t}">${t} (${remaining} table${
+              remaining !== 1 ? "s" : ""
+            } left)</option>`;
+          })
+          .join("");
 
       const totalRemaining = slotsWithCapacity.reduce((sum, t) => {
         const booked = bookedMap[t] || 0;
@@ -1166,12 +1322,12 @@
     const dateInput = document.querySelector('#reserve-form input[name="date"]');
     const timeSelect = document.getElementById("res-time");
 
-    const todayStr = new Date().toISOString().slice(0,10);
+    const todayStr = new Date().toISOString().slice(0, 10);
     dateInput.min = todayStr;
 
     const maxDate = new Date();
     maxDate.setDate(maxDate.getDate() + 30);
-    dateInput.max = maxDate.toISOString().slice(0,10);
+    dateInput.max = maxDate.toISOString().slice(0, 10);
 
     dateInput.addEventListener("change", () => {
       const d = dateInput.value;
@@ -1191,7 +1347,7 @@
     bindUI();
     bindReservationSlotsUI();
 
-    fetchMenu().catch(err => {
+    fetchMenu().catch((err) => {
       console.error(err);
       $("#menu-sections").innerHTML = `
         <div class="text-red-600 text-sm">
@@ -1209,7 +1365,7 @@
   init();
 
   // ABOUT MOVING GALLERY
-  (function setupAboutGallery(){
+  (function setupAboutGallery() {
     const track = document.getElementById("about-track");
     if (!track) return;
 
@@ -1242,8 +1398,12 @@
       restart();
     }
 
-    function next(){ go(i + 1); }
-    function prev(){ go(i - 1); }
+    function next() {
+      go(i + 1);
+    }
+    function prev() {
+      go(i - 1);
+    }
 
     function restart() {
       if (timer) clearInterval(timer);
@@ -1259,7 +1419,7 @@
 
     go(0);
   })();
-  </script>
+</script>
 
 </body>
 </html>
