@@ -341,4 +341,25 @@ router.put("/:id(\\d+)", requireAuth, async (req, res) => {
   }
 });
 
+
+router.post("/pay", (req, res) => {
+  const { orderId, amount } = req.body;
+
+  res.redirect(
+    `/mock-gateway.html?orderId=${orderId}&amount=${amount}`
+  );
+});
+
+router.get("/payment/return", async (req, res) => {
+  const { status, orderId } = req.query;
+
+  // OPTIONAL (for demo):
+  // Update order status in DB
+  // success → paid
+  // failed → failed
+  // pending → pending
+
+  res.redirect(`/receipt.html?status=${status}&orderId=${orderId}`);
+});
+
 module.exports = router;

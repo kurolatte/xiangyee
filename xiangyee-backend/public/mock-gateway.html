@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Secure Payment</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial; background:#f5f6f8; }
+    .box { max-width:420px; margin:50px auto; background:#fff; padding:24px; border-radius:12px; }
+    input, select, button { width:100%; padding:12px; margin-top:10px; }
+    button { background:#111827; color:#fff; border:none; border-radius:8px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Mock Payment Gateway</h2>
+    <p id="info"></p>
+
+    <input placeholder="Card Number (Fake)" value="4242 4242 4242 4242" />
+    <input placeholder="MM/YY" value="12/30" />
+    <input placeholder="CVV" value="123" />
+
+    <label>Payment Outcome (Demo)</label>
+    <select id="status">
+      <option value="success">Success</option>
+      <option value="failed">Failed</option>
+      <option value="pending">Pending</option>
+    </select>
+
+    <button onclick="pay()">Pay Now</button>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get("orderId");
+  const amount = params.get("amount");
+
+  document.getElementById("info").innerText =
+    `Order #${orderId} — Amount $${amount}`;
+
+  function pay() {
+    const status = document.getElementById("status").value;
+
+    // ✅ Go back to index + show My Order section
+    // You can also store payment status in localStorage if needed
+    window.location.assign(
+      `index.html?order_id=${encodeURIComponent(orderId)}&pay_status=${encodeURIComponent(status)}#my-order`
+    );
+  }
+</script>
+</body>
+</html>

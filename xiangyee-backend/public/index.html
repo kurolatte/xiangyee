@@ -930,87 +930,88 @@
 
   // CREATE ORDER (FIXED: table_no only for dine_in; no new tab; update URL safely)
   async function submitOrder(e) {
-    e.preventDefault();
-    if (!cart.length) return alert("Cart empty!");
+  e.preventDefault();
+  if (!cart.length) return alert("Cart empty!");
 
-    const form = e.target;
+  const form = e.target;
 
-    const customer_name = form.customer_name.value.trim();
-    if (!/^[A-Za-z\s'.-]{2,50}$/.test(customer_name)) {
-      alert("Please enter a valid name (letters only). No numbers.");
-      form.customer_name.focus();
-      return;
-    }
+  const customer_name = form.customer_name.value.trim();
+  if (!/^[A-Za-z\s'.-]{2,50}$/.test(customer_name)) {
+    alert("Please enter a valid name (letters only). No numbers.");
+    form.customer_name.focus();
+    return;
+  }
 
-    const customer_phone = form.customer_phone.value.trim().replace(/\s+/g, "");
-    if (!/^[89]\d{7}$/.test(customer_phone)) {
-      alert("Please enter a valid 8-digit phone number starting with 8 or 9.");
-      form.customer_phone.focus();
-      return;
-    }
+  const customer_phone = form.customer_phone.value.trim().replace(/\s+/g, "");
+  if (!/^[89]\d{7}$/.test(customer_phone)) {
+    alert("Please enter a valid 8-digit phone number starting with 8 or 9.");
+    form.customer_phone.focus();
+    return;
+  }
 
-    const orderType = form.order_type.value;
-    const tableNoRaw = (form.table_no.value || "").trim();
+  const orderType = form.order_type.value;
+  const tableNoRaw = (form.table_no.value || "").trim();
 
-    const payload = {
-      customer_name,
-      customer_phone,
-      order_type: orderType,
-      // ✅ only send table_no if dine_in and not empty
-      table_no: (orderType === "dine_in" && tableNoRaw) ? tableNoRaw : null,
-      notes: (form.notes.value || "").trim() || null,
-      // ✅ ensure menu_item_id is number
-      items: cart.map(c => ({ menu_item_id: Number(c.id), quantity: Number(c.qty) }))
-    };
+  const payload = {
+    customer_name,
+    customer_phone,
+    order_type: orderType,
+    // ✅ only send table_no if dine_in and not empty
+    table_no: (orderType === "dine_in" && tableNoRaw) ? tableNoRaw : null,
+    notes: (form.notes.value || "").trim() || null,
+    // ✅ ensure menu_item_id is number
+    items: cart.map(c => ({ menu_item_id: Number(c.id), quantity: Number(c.qty) }))
+  };
 
-    let res, rawText;
-    try {
-      res = await fetch(`${API_BASE}/orders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      rawText = await res.text();
-    } catch (err) {
-      console.error("Network error:", err);
-      alert("Network error: backend not reachable.");
-      return;
-    }
-
-    if (!res.ok) {
-      console.error("Order API error:", res.status, rawText);
-      alert(`Unable to place order (${res.status}).\n\n${rawText}`);
-      return;
-    }
-
-    let data = {};
-    try { data = JSON.parse(rawText); } catch { data = {}; }
-
-    // Save last order (for collect verification)
-    saveLastOrder({
-      order_id: data.order_id,
-      order_no: data.order_no,
-      customer_phone
+  let res, rawText;
+  try {
+    res = await fetch(`${API_BASE}/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
 
-    cart = [];
-    saveCart();
-    renderCart();
-    updateCartCount();
-    form.reset();
-    closeCart();
-
-    showMyOrderTab();
-
-    // ✅ update URL in SAME tab without reload
-    const url = new URL(window.location.href);
-    url.searchParams.set("order_id", data.order_id);
-    history.replaceState({}, "", url.toString());
-
-    window.location.hash = "my-order";
-    loadMyOrderFromDevice();
+    rawText = await res.text();
+  } catch (err) {
+    console.error("Network error:", err);
+    alert("Network error: backend not reachable.");
+    return;
   }
+
+  if (!res.ok) {
+    console.error("Order API error:", res.status, rawText);
+    alert(`Unable to place order (${res.status}).\n\n${rawText}`);
+    return;
+  }
+
+  let data = {};
+  try { data = JSON.parse(rawText); } catch { data = {}; }
+
+  // ✅ Safety check
+  if (!data?.order_id) {
+    console.error("Order API success but missing order_id:", data);
+    alert("Order created but order ID missing. Please try again.");
+    return;
+  }
+
+  // Save last order (for collect verification)
+  saveLastOrder({
+    order_id: data.order_id,
+    order_no: data.order_no,
+    customer_phone
+  });
+
+  // ✅ Redirect to mock payment gateway (project/demo)
+  // Use backend order_id as the payment reference
+  const amount = cartTotal().toFixed(2);
+  console.log("Redirecting to mock gateway...", { orderId: data.order_id, amount });
+
+  window.location.assign(
+    `mock-gateway.html?orderId=${encodeURIComponent(data.order_id)}&amount=${encodeURIComponent(amount)}`
+  );
+  return;
+}
+
 
   // RESERVATION
   async function submitReservation(e) {
