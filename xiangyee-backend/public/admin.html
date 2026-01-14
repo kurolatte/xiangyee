@@ -14,8 +14,8 @@
     }
   </style>
 </head>
-<body class="bg-neutral-50 text-neutral-900">
 
+<body class="bg-neutral-50 text-neutral-900">
   <div class="max-w-6xl mx-auto p-6 space-y-6">
 
     <div class="flex items-center justify-between">
@@ -43,15 +43,9 @@
       <!-- TABS -->
       <div class="bg-white rounded-2xl border shadow">
         <div class="sticky top-0 bg-white rounded-2xl border-b p-3 flex gap-2 z-10">
-          <button id="tab-orders" class="px-3 py-2 rounded-lg text-sm font-semibold bg-black text-white">
-            Orders
-          </button>
-          <button id="tab-res" class="px-3 py-2 rounded-lg text-sm font-semibold bg-neutral-100 hover:bg-neutral-200">
-            Reservations
-          </button>
-          <button id="tab-menu" class="px-3 py-2 rounded-lg text-sm font-semibold bg-neutral-100 hover:bg-neutral-200">
-            Menu
-          </button>
+          <button id="tab-orders" class="px-3 py-2 rounded-lg text-sm font-semibold bg-black text-white">Orders</button>
+          <button id="tab-res" class="px-3 py-2 rounded-lg text-sm font-semibold bg-neutral-100 hover:bg-neutral-200">Reservations</button>
+          <button id="tab-menu" class="px-3 py-2 rounded-lg text-sm font-semibold bg-neutral-100 hover:bg-neutral-200">Menu</button>
         </div>
 
         <!-- ORDERS PANEL -->
@@ -96,8 +90,7 @@
           <!-- Filters -->
           <div class="mt-4 bg-white p-4 rounded-xl border flex flex-col md:flex-row md:items-center gap-3">
             <div class="flex-1">
-              <input id="menu-search" placeholder="Search by English/Chinese name..."
-                class="border p-2 rounded w-full" />
+              <input id="menu-search" placeholder="Search by English/Chinese name..." class="border p-2 rounded w-full" />
             </div>
 
             <div class="flex gap-2 w-full md:w-auto">
@@ -112,9 +105,7 @@
               </select>
             </div>
 
-            <div id="menu-count" class="text-sm text-neutral-600 md:text-right md:w-40">
-              0 items
-            </div>
+            <div id="menu-count" class="text-sm text-neutral-600 md:text-right md:w-40">0 items</div>
           </div>
 
           <div class="mt-3 text-sm text-neutral-600">
@@ -131,6 +122,67 @@
   <!-- Toast container -->
   <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
 
+  <!-- ✅ EDIT MODAL -->
+  <div id="edit-modal" class="fixed inset-0 hidden z-50">
+    <div id="edit-backdrop" class="absolute inset-0 bg-black/40"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-2xl bg-white rounded-2xl shadow-xl border overflow-hidden">
+        <div class="p-4 border-b flex items-center justify-between">
+          <div>
+            <div class="text-lg font-black">Edit Menu Item</div>
+            <div id="edit-subtitle" class="text-xs text-neutral-500"></div>
+          </div>
+          <button id="edit-close" class="px-3 py-2 rounded-lg border text-sm bg-white hover:bg-neutral-100">
+            Close
+          </button>
+        </div>
+
+        <form id="edit-form" class="p-4 grid md:grid-cols-6 gap-3">
+          <input type="hidden" name="id" />
+
+          <label class="md:col-span-3 text-sm">
+            <div class="text-xs text-neutral-600 mb-1">Name (EN)</div>
+            <input name="name_en" required class="border p-2 rounded w-full" />
+          </label>
+
+          <label class="md:col-span-3 text-sm">
+            <div class="text-xs text-neutral-600 mb-1">Name (CN)</div>
+            <input name="name_cn" required class="border p-2 rounded w-full" />
+          </label>
+
+          <label class="md:col-span-2 text-sm">
+            <div class="text-xs text-neutral-600 mb-1">Price</div>
+            <input name="price" required type="number" step="0.01" class="border p-2 rounded w-full" />
+          </label>
+
+          <label class="md:col-span-2 text-sm">
+            <div class="text-xs text-neutral-600 mb-1">Category</div>
+            <input name="category" class="border p-2 rounded w-full" />
+          </label>
+
+          <label class="md:col-span-2 text-sm flex items-end gap-2">
+            <input type="checkbox" name="is_available" class="h-4 w-4" />
+            <span class="text-sm">Available</span>
+          </label>
+
+          <label class="md:col-span-6 text-sm">
+            <div class="text-xs text-neutral-600 mb-1">Image URL (path or full URL)</div>
+            <input name="image_url" class="border p-2 rounded w-full" placeholder="/menu/three-combo-marinated.jpg" />
+          </label>
+
+          <div class="md:col-span-6 flex items-center justify-between gap-2 pt-2">
+            <div class="text-xs text-neutral-500">
+              This updates the existing record (old orders stay safe).
+            </div>
+            <button class="px-4 py-2 rounded-lg bg-black text-white text-sm font-semibold">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
 <script>
   const API_BASE = "/api";
   const ASSET_BASE = location.origin;
@@ -144,35 +196,15 @@
 
   const money = (n) => `$${Number(n || 0).toFixed(2)}`;
 
-  // ✅ Normalize image_url so these all work:
-  // "menu/x.jpg"  -> "/menu/x.jpg" -> same origin
-  // "/menu/x.jpg" -> same origin
-  // "https://..." -> as is
   function resolveImageUrl(url) {
     if (!url) return "";
     const s = String(url).trim();
     if (!s) return "";
     if (s.startsWith("http://") || s.startsWith("https://")) return s;
-
     const path = s.startsWith("/") ? s : `/${s}`;
     return `${ASSET_BASE}${path}`;
   }
 
-  // ====== DATE/TIME HELPERS ======
-  function formatTimeHM(value) {
-    if (!value) return "";
-    const s = String(value);
-    const m = s.match(/(\d{2}:\d{2})/);
-    return m ? m[1] : s;
-  }
-  function formatDateYMD(value) {
-    if (!value) return "";
-    const s = String(value);
-    const m = s.match(/(\d{4}-\d{2}-\d{2})/);
-    return m ? m[1] : s;
-  }
-
-  // ====== TOAST ======
   function showToast(text, type = "info") {
     const container = document.getElementById("toast-container");
     const div = document.createElement("div");
@@ -270,14 +302,12 @@
   function safeParseItems(items) {
     if (!items) return [];
     if (Array.isArray(items)) return items;
-    try { return JSON.parse(items); }
-    catch { return []; }
+    try { return JSON.parse(items); } catch { return []; }
   }
 
-  // ====== LIVE TRACKING STATE ======
+  // ====== LIVE TRACKING (orders/reservations) ======
   let lastOrderIds = new Set();
   let lastResIds   = new Set();
-
   let unreadOrderIds = new Set();
   let unreadResIds   = new Set();
 
@@ -319,11 +349,9 @@
 
   function setActiveTab(tab) {
     activeTab = tab;
-
     panelOrders.classList.toggle("hidden", tab !== "orders");
     panelRes.classList.toggle("hidden", tab !== "reservations");
     panelMenu.classList.toggle("hidden", tab !== "menu");
-
     styleTab(tabOrdersBtn, tab === "orders");
     styleTab(tabResBtn, tab === "reservations");
     styleTab(tabMenuBtn, tab === "menu");
@@ -332,16 +360,12 @@
   setActiveTab("orders");
   tabOrdersBtn.onclick = () => setActiveTab("orders");
   tabResBtn.onclick    = () => setActiveTab("reservations");
-  tabMenuBtn.onclick   = () => {
-    setActiveTab("menu");
-    // optional: loadMenuAdmin(false);
-  };
+  tabMenuBtn.onclick   = () => setActiveTab("menu");
 
   // ====== ORDERS UI ======
   function orderCard(o) {
     const div = document.createElement("div");
     div.className = "p-4 rounded-xl border bg-neutral-50";
-
     applyUnreadStyle(div, unreadOrderIds.has(o.id));
 
     const itemsArr = safeParseItems(o.items);
@@ -390,7 +414,6 @@
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ status: sel.value })
       });
-
       unreadOrderIds.delete(o.id);
       loadOrders(true);
     };
@@ -405,7 +428,6 @@
     try {
       const res = await authedFetch(`${API_BASE}/orders/admin`);
       if (!res.ok) throw new Error("Failed to load orders");
-
       let data = await res.json();
 
       data.sort((a, b) => {
@@ -415,7 +437,6 @@
       });
 
       root.innerHTML = "";
-
       if (!data.length) {
         root.innerHTML = `<div class="text-sm text-neutral-500">No orders yet.</div>`;
         lastOrderIds = new Set();
@@ -423,22 +444,17 @@
       }
 
       const currentIds = new Set(data.map(o => o.id));
-
       if (!initial) {
         const newOnes = data.filter(o => !lastOrderIds.has(o.id));
         if (newOnes.length) {
           newOnes.forEach(o => unreadOrderIds.add(o.id));
-          showToast(
-            `🧾 New order(s): ${newOnes.map(o => o.order_no || `#${o.id}`).join(", ")}`,
-            "success"
-          );
+          showToast(`🧾 New order(s): ${newOnes.map(o => o.order_no || `#${o.id}`).join(", ")}`, "success");
           if (activeTab === "reservations") setActiveTab("orders");
         }
       }
 
       lastOrderIds = currentIds;
       data.forEach(o => root.appendChild(orderCard(o)));
-
     } catch (err) {
       console.error(err);
       root.innerHTML = `<div class="text-sm text-red-600">Error loading orders.</div>`;
@@ -448,9 +464,6 @@
   // ====== RESERVATIONS UI ======
   function resCard(r) {
     const div = document.createElement("div");
-    const timeStr = formatTimeHM(r.reservation_time);
-    const dateStr = formatDateYMD(r.reservation_date);
-
     div.className = "p-4 rounded-xl border bg-neutral-50";
     applyUnreadStyle(div, unreadResIds.has(r.id));
 
@@ -459,7 +472,7 @@
         <div>
           <div class="font-semibold">${r.customer_name} (${r.customer_phone})</div>
           <div class="text-sm text-neutral-600">
-            ${dateStr} • ${timeStr || "-"} • Pax ${r.pax}
+            ${r.reservation_date || "-"} • ${r.reservation_time || "-"} • Pax ${r.pax}
           </div>
           <div class="text-xs text-neutral-500">Status: ${r.status}</div>
           ${r.notes ? `<div class="text-xs text-neutral-500 mt-1">Notes: ${r.notes}</div>` : ""}
@@ -479,7 +492,6 @@
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ status: sel.value })
       });
-
       unreadResIds.delete(r.id);
       loadReservations(true);
     };
@@ -494,22 +506,9 @@
     try {
       const res = await authedFetch(`${API_BASE}/reservations/admin`);
       if (!res.ok) throw new Error("Failed to load reservations");
-
       let data = await res.json();
 
-      data.sort((a, b) => {
-        const da = formatDateYMD(a.reservation_date) || "9999-12-31";
-        const db = formatDateYMD(b.reservation_date) || "9999-12-31";
-        const ta = formatTimeHM(a.reservation_time) || "00:00";
-        const tb = formatTimeHM(b.reservation_time) || "00:00";
-        const aKey = Number(da.replaceAll("-", "") + ta.replace(":", ""));
-        const bKey = Number(db.replaceAll("-", "") + tb.replace(":", ""));
-        if (aKey !== bKey) return aKey - bKey;
-        return (a.id || 0) - (b.id || 0);
-      });
-
       root.innerHTML = "";
-
       if (!data.length) {
         root.innerHTML = `<div class="text-sm text-neutral-500">No reservations yet.</div>`;
         lastResIds = new Set();
@@ -517,33 +516,25 @@
       }
 
       const currentIds = new Set(data.map(r => r.id));
-
       if (!initial) {
         const newRes = data.filter(r => !lastResIds.has(r.id));
         if (newRes.length) {
           newRes.forEach(r => unreadResIds.add(r.id));
-          showToast(
-            `New reservation(s): ${newRes
-              .map(r => `${formatDateYMD(r.reservation_date)} ${formatTimeHM(r.reservation_time)} • ${r.customer_name}`)
-              .join(" | ")}`,
-            "success"
-          );
+          showToast(`New reservation(s): ${newRes.map(r => `${r.reservation_date} ${r.reservation_time} • ${r.customer_name}`).join(" | ")}`, "success");
           if (activeTab === "orders") setActiveTab("reservations");
         }
       }
 
       lastResIds = currentIds;
       data.forEach(r => root.appendChild(resCard(r)));
-
     } catch (err) {
       console.error(err);
       root.innerHTML = `<div class="text-sm text-red-600">Error loading reservations.</div>`;
     }
   }
 
-  // ====== MENU ADMIN UI (with filters + ✅ image thumbnail) ======
+  // ====== MENU ADMIN UI ======
   let allMenuItems = [];
-  let menuCategories = [];
 
   function setMenuCount(n) {
     const el = document.getElementById("menu-count");
@@ -556,10 +547,8 @@
 
     const cats = Array.from(new Set(items.map(x => x.category).filter(Boolean)))
       .sort((a,b)=>String(a).localeCompare(String(b)));
-    menuCategories = cats;
 
     const current = select.value;
-
     select.innerHTML = `<option value="">All Categories</option>` +
       cats.map(c => `<option value="${c}">${c}</option>`).join("");
 
@@ -575,10 +564,8 @@
 
   function applyMenuFilters(items) {
     const { q, cat, avail } = getMenuFilters();
-
     return items.filter(m => {
       if (cat && m.category !== cat) return false;
-
       if (avail === "available" && !m.is_available) return false;
       if (avail === "unavailable" && m.is_available) return false;
 
@@ -599,6 +586,66 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
   }
+
+  // ✅ Edit modal wiring
+  const editModal = document.getElementById("edit-modal");
+  const editClose = document.getElementById("edit-close");
+  const editBackdrop = document.getElementById("edit-backdrop");
+  const editForm  = document.getElementById("edit-form");
+  const editSubtitle = document.getElementById("edit-subtitle");
+
+  function openEditModal(item) {
+    editForm.id.value = item.id;
+    editForm.name_en.value = item.name_en || "";
+    editForm.name_cn.value = item.name_cn || "";
+    editForm.price.value = Number(item.price || 0).toFixed(2);
+    editForm.category.value = item.category || "";
+    editForm.image_url.value = item.image_url || "";
+    editForm.is_available.checked = !!item.is_available;
+
+    editSubtitle.textContent = `ID: ${item.id}`;
+    editModal.classList.remove("hidden");
+  }
+  function closeEditModal() {
+    editModal.classList.add("hidden");
+  }
+  editClose.onclick = closeEditModal;
+  editBackdrop.onclick = closeEditModal;
+
+  editForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const id = editForm.id.value;
+
+    const payload = {
+      name_en: editForm.name_en.value.trim(),
+      name_cn: editForm.name_cn.value.trim(),
+      price: Number(editForm.price.value),
+      category: (editForm.category.value || "Main Dishes").trim(),
+      image_url: (editForm.image_url.value || "").trim() || null,
+      is_available: !!editForm.is_available.checked
+    };
+
+    try {
+      const res = await authedFetch(`${API_BASE}/menu/admin/${id}`, {
+        method: "PUT",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || err.message || "Failed to update item", "error");
+        return;
+      }
+
+      showToast("Menu item updated", "success");
+      closeEditModal();
+      loadMenuAdmin(true);
+    } catch (err) {
+      console.error(err);
+      showToast("Error updating item", "error");
+    }
+  };
 
   function menuCard(m) {
     const div = document.createElement("div");
@@ -639,9 +686,12 @@
         </div>
 
         <div class="flex gap-2 md:justify-end">
+          <button class="edit px-3 py-2 rounded-lg border text-sm bg-white hover:bg-neutral-100">Edit</button>
+
           <button class="toggle px-3 py-2 rounded-lg border text-sm bg-white hover:bg-neutral-100">
             ${m.is_available ? "Set Unavailable" : "Set Available"}
           </button>
+
           <button class="del px-3 py-2 rounded-lg border text-sm bg-white hover:bg-neutral-100">
             Remove
           </button>
@@ -649,6 +699,10 @@
       </div>
     `;
 
+    // ✅ Edit
+    div.querySelector(".edit").onclick = () => openEditModal(m);
+
+    // Toggle availability
     div.querySelector(".toggle").onclick = async () => {
       await authedFetch(`${API_BASE}/menu/admin/${m.id}`, {
         method: "PUT",
@@ -659,10 +713,17 @@
       loadMenuAdmin(true);
     };
 
+    // ✅ SAFE REMOVE: hide only (no breaking old orders)
     div.querySelector(".del").onclick = async () => {
       if (!confirm(`Remove "${m.name_en}"? (This will hide it)`)) return;
-      await authedFetch(`${API_BASE}/menu/admin/${m.id}`, { method: "DELETE" });
-      showToast("Menu item removed", "success");
+
+      await authedFetch(`${API_BASE}/menu/admin/${m.id}`, {
+        method: "PUT",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ is_available: false })
+      });
+
+      showToast("Menu item hidden", "success");
       loadMenuAdmin(true);
     };
 
@@ -715,83 +776,67 @@
     }
   }
 
-  // ====== MENU EVENTS (safe-guarded) ======
+  // ====== ADD MENU ITEM ======
   const menuForm = document.getElementById("menu-form");
-  if (menuForm) {
-    menuForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const f = e.target;
+  menuForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = e.target;
 
-      const payload = {
-        name_en: f.name_en.value.trim(),
-        name_cn: f.name_cn.value.trim(),
-        price: Number(f.price.value),
-        category: (f.category.value || "Main Dishes").trim(),
-        image_url: (f.image_url.value || "").trim() || null,
-        is_available: !!f.is_available.checked
-      };
+    const payload = {
+      name_en: f.name_en.value.trim(),
+      name_cn: f.name_cn.value.trim(),
+      price: Number(f.price.value),
+      category: (f.category.value || "Main Dishes").trim(),
+      image_url: (f.image_url.value || "").trim() || null,
+      is_available: !!f.is_available.checked
+    };
 
-      try {
-        const res = await authedFetch(`${API_BASE}/menu/admin`, {
-          method: "POST",
-          headers: {"Content-Type":"application/json"},
-          body: JSON.stringify(payload)
-        });
+    try {
+      const res = await authedFetch(`${API_BASE}/menu/admin`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+      });
 
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          showToast(err.error || err.message || "Failed to add item", "error");
-          return;
-        }
-
-        f.reset();
-        f.is_available.checked = true;
-        showToast("Menu item added", "success");
-        loadMenuAdmin(true);
-      } catch (err) {
-        console.error(err);
-        showToast("Error adding item", "error");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || err.message || "Failed to add item", "error");
+        return;
       }
-    });
-  }
 
-  const menuRefreshBtn = document.getElementById("menu-refresh");
-  if (menuRefreshBtn) menuRefreshBtn.onclick = () => loadMenuAdmin(true);
+      f.reset();
+      f.is_available.checked = true;
+      showToast("Menu item added", "success");
+      loadMenuAdmin(true);
+    } catch (err) {
+      console.error(err);
+      showToast("Error adding item", "error");
+    }
+  });
 
-  const menuSearch = document.getElementById("menu-search");
-  if (menuSearch) menuSearch.addEventListener("input", () => refreshMenuView());
-
-  const menuCategory = document.getElementById("menu-category");
-  if (menuCategory) menuCategory.addEventListener("change", () => refreshMenuView());
-
-  const menuAvail = document.getElementById("menu-availability");
-  if (menuAvail) menuAvail.addEventListener("change", () => refreshMenuView());
+  // filters
+  document.getElementById("menu-refresh").onclick = () => loadMenuAdmin(true);
+  document.getElementById("menu-search").addEventListener("input", refreshMenuView);
+  document.getElementById("menu-category").addEventListener("change", refreshMenuView);
+  document.getElementById("menu-availability").addEventListener("change", refreshMenuView);
 
   // ====== AUTO REFRESH ======
   function setupAutoRefresh() {
     clearAutoRefresh();
-
-    ordersInterval = setInterval(() => {
-      if (token) loadOrders(false);
-    }, 5000);
-
-    resInterval = setInterval(() => {
-      if (token) loadReservations(false);
-    }, 5000);
+    ordersInterval = setInterval(() => { if (token) loadOrders(false); }, 5000);
+    resInterval = setInterval(() => { if (token) loadReservations(false); }, 5000);
   }
-
   function clearAutoRefresh() {
     if (ordersInterval) clearInterval(ordersInterval);
-    if (resInterval)  clearInterval(resInterval);
+    if (resInterval) clearInterval(resInterval);
     ordersInterval = null;
-    resInterval    = null;
+    resInterval = null;
   }
 
   // ====== WIRE EVENTS ======
   document.getElementById("login-form").addEventListener("submit", login);
   logoutBtn.onclick = doLogout;
 
-  // auto-login if token exists
   if (token) {
     setAuthedUI(true);
     loadOrders(true);
