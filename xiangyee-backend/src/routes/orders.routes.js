@@ -48,8 +48,6 @@ router.post("/", async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    // ====== DAILY ORDER NUMBER (SERIALIZABLE-like using row lock) ======
-    // 1) ensure row exists + increment atomically
     const seqUpsert = await client.query(
       `
       INSERT INTO daily_order_seq (seq_date, last_seq)
@@ -63,14 +61,10 @@ router.post("/", async (req, res) => {
     const seq = seqUpsert.rows?.[0]?.last_seq;
     if (!seq) throw new Error("Failed to generate daily sequence");
 
-    // 2) format YYYYMMDD in Postgres
-    const ymdRes = await client.query(
-      `SELECT to_char(NOW(), 'YYYYMMDD') AS ymd`
-    );
+    const ymdRes = await client.query(`SELECT to_char(NOW(), 'YYYYMMDD') AS ymd`);
     const ymd = ymdRes.rows?.[0]?.ymd;
     const orderNo = `${ymd}-${String(seq).padStart(3, "0")}`;
 
-    // ====== INSERT ORDER ======
     const orderInsert = await client.query(
       `
       INSERT INTO orders
@@ -92,7 +86,6 @@ router.post("/", async (req, res) => {
     const orderId = orderInsert.rows?.[0]?.id;
     if (!orderId) throw new Error("Failed to create order");
 
-    // ====== INSERT ITEMS + TOTAL ======
     let total = 0;
 
     for (const it of items) {
@@ -124,7 +117,6 @@ router.post("/", async (req, res) => {
       );
     }
 
-    // ====== UPDATE ORDER TOTAL ======
     await client.query(
       `
       UPDATE orders
@@ -142,9 +134,7 @@ router.post("/", async (req, res) => {
       total_amount: total,
     });
   } catch (e) {
-    try {
-      await client.query("ROLLBACK");
-    } catch {}
+    try { await client.query("ROLLBACK"); } catch {}
     return res.status(400).json({ error: e.message });
   } finally {
     client.release();
@@ -188,7 +178,6 @@ router.post("/:id(\\d+)/collected", async (req, res) => {
     }
     const { order_no, customer_phone } = parsed.data;
 
-    // Load order
     const orderRes = await pool.query(
       `
       SELECT id, order_no, customer_phone, status
@@ -201,7 +190,6 @@ router.post("/:id(\\d+)/collected", async (req, res) => {
     const order = orderRes.rows?.[0];
     if (!order) return res.status(404).json({ error: "Order not found" });
 
-    // Verify identity
     if (
       String(order.order_no || "") !== String(order_no || "") ||
       String(order.customer_phone || "") !== String(customer_phone || "")
@@ -210,8 +198,6 @@ router.post("/:id(\\d+)/collected", async (req, res) => {
     }
 
     const cur = String(order.status || "").toLowerCase();
-
-    // Only allow READY -> COLLECTED
     if (cur !== "ready") {
       return res.status(400).json({
         error: `Cannot mark collected unless status is 'ready'. Current: '${order.status}'`,
@@ -231,11 +217,7 @@ router.post("/:id(\\d+)/collected", async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // Return updated order (with items)
-    const updatedOrderRes = await pool.query(
-      `SELECT * FROM orders WHERE id = $1`,
-      [id]
-    );
+    const updatedOrderRes = await pool.query(`SELECT * FROM orders WHERE id = $1`, [id]);
 
     const itemsRes = await pool.query(
       `
@@ -265,10 +247,7 @@ router.get("/:id(\\d+)", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
 
-    const orderRes = await pool.query(
-      `SELECT * FROM orders WHERE id = $1`,
-      [id]
-    );
+    const orderRes = await pool.query(`SELECT * FROM orders WHERE id = $1`, [id]);
 
     const order = orderRes.rows?.[0];
     if (!order) return res.status(404).json({ error: "Order not found" });
@@ -294,14 +273,35 @@ router.get("/:id(\\d+)", async (req, res) => {
 });
 
 /* =========================
-   ADMIN: LIST ORDERS
+   ✅ ADMIN: LIST ORDERS (WITH ITEMS)
    GET /api/orders/admin
 ========================= */
 router.get("/admin", requireAuth, async (req, res) => {
   try {
-    const r = await pool.query(
-      `SELECT * FROM orders ORDER BY id DESC`
-    );
+    const r = await pool.query(`
+      SELECT
+        o.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'menu_item_id', oi.menu_item_id,
+              'quantity', oi.quantity,
+              'unit_price', oi.unit_price,
+              'line_total', oi.line_total,
+              'name_en', mi.name_en,
+              'name_cn', mi.name_cn
+            )
+            ORDER BY oi.id ASC
+          ) FILTER (WHERE oi.id IS NOT NULL),
+          '[]'::json
+        ) AS items
+      FROM orders o
+      LEFT JOIN order_items oi ON oi.order_id = o.id
+      LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
+      GROUP BY o.id
+      ORDER BY o.id DESC
+    `);
+
     return res.json(r.rows);
   } catch (e) {
     return res.status(500).json({ error: e.message });
