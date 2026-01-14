@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reservations", reservationRoutes);
-app.use("/api/admin/menu", );
+app.use("/api/admin/menu", adminMenu);
 app.use("/api/auth", authRoutes);
 app.use("/api/instagram", instagramRoutes);
 
