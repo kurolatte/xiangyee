@@ -279,6 +279,28 @@
     </div>
   </section>
 
+<!-- Instagram -->
+<!-- <section id="instagram" class="bg-white border-y border-neutral-200">
+  <div class="max-w-6xl mx-auto px-4 py-16 md:py-24">
+    <div class="text-center max-w-2xl mx-auto mb-10">
+      <div class="text-sm tracking-widest uppercase text-brand-red font-semibold mb-2">Instagram</div>
+      <h2 class="text-3xl md:text-4xl font-extrabold">Latest from Instagram</h2>
+      <p class="mt-3 text-neutral-600 leading-relaxed">
+        Auto-updated from our official Instagram page.
+      </p>
+
+      <a id="ig-profile-link" href="https://www.instagram.com/xiangyee.101/" target="_blank"
+         class="inline-flex mt-5 px-5 py-3 rounded-xl bg-brand-red text-white font-semibold hover:bg-red-700">
+        Visit Instagram
+      </a>
+    </div>
+
+    <div id="ig-grid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div class="text-neutral-500 text-sm">Loading Instagram…</div>
+    </div>
+  </div>
+</section> -->
+
   <!-- Reservation -->
   <section id="reserve" class="bg-white border-y border-neutral-200">
     <div class="max-w-4xl mx-auto px-4 py-16 md:py-24">
@@ -1339,7 +1361,82 @@
     });
   }
 
+  // INSTAGRAM FEED (Graph API via your backend)
+const IG_PROFILE_URL = "https://www.instagram.com/xiangyee.101/"; // change this
+
+async function fetchInstagram() {
+  const res = await fetch(`${API_BASE}/instagram`);
+  if (!res.ok) throw new Error("Failed to fetch Instagram feed");
+  return res.json();
+}
+
+function truncate(str, n = 80) {
+  const s = String(str || "").trim();
+  if (s.length <= n) return s;
+  return s.slice(0, n).trim() + "…";
+}
+
+function renderInstagram(posts) {
+  const grid = document.getElementById("ig-grid");
+  const profileBtn = document.getElementById("ig-profile-link");
+  if (profileBtn) profileBtn.href = IG_PROFILE_URL;
+
+  if (!grid) return;
+
+  if (!Array.isArray(posts) || posts.length === 0) {
+    grid.innerHTML = `<div class="text-neutral-500 text-sm">No Instagram posts found.</div>`;
+    return;
+  }
+
+  grid.innerHTML = "";
+
+  posts.forEach((p) => {
+    const card = document.createElement("a");
+    card.href = p.permalink;
+    card.target = "_blank";
+    card.rel = "noopener";
+    card.className =
+      "group rounded-2xl overflow-hidden border border-neutral-200 shadow-soft bg-white";
+
+    const caption = truncate(p.caption, 90);
+
+    card.innerHTML = `
+      <div class="relative">
+        <img
+          src="${p.media_url}"
+          alt="Instagram post"
+          class="h-64 w-full object-cover group-hover:scale-105 transition"
+          loading="lazy"
+        />
+        <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-black/45 flex items-end">
+          <div class="p-4 text-white text-sm">
+            <div class="font-semibold">${p.media_type === "VIDEO" ? "Video" : "Post"}</div>
+            <div class="opacity-90">${caption || "Tap to view on Instagram"}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+
   function init() {
+fetchInstagram()
+  .then(renderInstagram)
+  .catch(err => {
+    console.error(err);
+    const grid = document.getElementById("ig-grid");
+    if (grid) {
+      grid.innerHTML = `
+        <div class="text-red-600 text-sm">
+          Instagram feed failed to load. (Token missing/expired or account not set up.)
+        </div>`;
+    }
+  });
+
+
     $("#year").textContent = new Date().getFullYear();
     loadCart();
     renderCart();
