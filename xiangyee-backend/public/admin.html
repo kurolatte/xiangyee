@@ -85,7 +85,7 @@
             <input name="name_cn" required placeholder="Name (CN)" class="border p-2 rounded md:col-span-2" />
             <input name="price" required type="number" step="0.01" placeholder="Price" class="border p-2 rounded md:col-span-1" />
             <input name="category" placeholder="Category" class="border p-2 rounded md:col-span-1" />
-            <input name="image_url" placeholder="Image URL" class="border p-2 rounded md:col-span-5" />
+            <input name="image_url" placeholder="Image URL (e.g. /menu/three-combo-marinated.jpg)" class="border p-2 rounded md:col-span-5" />
             <label class="flex items-center gap-2 text-sm md:col-span-1">
               <input type="checkbox" name="is_available" checked />
               Available
@@ -143,6 +143,20 @@
   const msg            = document.getElementById("login-msg");
 
   const money = (n) => `$${Number(n || 0).toFixed(2)}`;
+
+  // ✅ Normalize image_url so these all work:
+  // "menu/x.jpg"  -> "/menu/x.jpg" -> same origin
+  // "/menu/x.jpg" -> same origin
+  // "https://..." -> as is
+  function resolveImageUrl(url) {
+    if (!url) return "";
+    const s = String(url).trim();
+    if (!s) return "";
+    if (s.startsWith("http://") || s.startsWith("https://")) return s;
+
+    const path = s.startsWith("/") ? s : `/${s}`;
+    return `${ASSET_BASE}${path}`;
+  }
 
   // ====== DATE/TIME HELPERS ======
   function formatTimeHM(value) {
@@ -320,7 +334,7 @@
   tabResBtn.onclick    = () => setActiveTab("reservations");
   tabMenuBtn.onclick   = () => {
     setActiveTab("menu");
-    // if (token) loadMenuAdmin(false);
+    // optional: loadMenuAdmin(false);
   };
 
   // ====== ORDERS UI ======
@@ -527,7 +541,7 @@
     }
   }
 
-  // ====== MENU ADMIN UI (with filters) ======
+  // ====== MENU ADMIN UI (with filters + ✅ image thumbnail) ======
   let allMenuItems = [];
   let menuCategories = [];
 
@@ -577,6 +591,15 @@
     });
   }
 
+  function escapeHtml(s) {
+    return String(s || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
   function menuCard(m) {
     const div = document.createElement("div");
     div.className = "p-4 rounded-xl border bg-neutral-50";
@@ -585,19 +608,37 @@
       ? `<span class="text-green-700 font-semibold">Available</span>`
       : `<span class="text-red-700 font-semibold">Unavailable</span>`;
 
+    const imgSrc = resolveImageUrl(m.image_url);
+
     div.innerHTML = `
-      <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-        <div class="space-y-1">
-          <div class="font-black text-lg">
-            ${m.name_en} <span class="font-semibold text-neutral-500">(${m.name_cn})</span>
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div class="flex gap-4">
+          <div class="w-24 h-24 rounded-xl border bg-white overflow-hidden flex items-center justify-center shrink-0">
+            ${
+              imgSrc
+                ? `<img
+                    src="${imgSrc}"
+                    alt="${escapeHtml(m.name_en || "Menu item")}"
+                    class="w-full h-full object-cover"
+                    loading="lazy"
+                    onerror="this.closest('div').innerHTML='<span class=\\'text-xs text-neutral-500\\'>No image</span>'"
+                  />`
+                : `<span class="text-xs text-neutral-500">No image</span>`
+            }
           </div>
-          <div class="text-sm text-neutral-600">
-            ${m.category} • ${money(m.price)} • ${statusPill}
+
+          <div class="space-y-1">
+            <div class="font-black text-lg">
+              ${escapeHtml(m.name_en)} <span class="font-semibold text-neutral-500">(${escapeHtml(m.name_cn)})</span>
+            </div>
+            <div class="text-sm text-neutral-600">
+              ${escapeHtml(m.category)} • ${money(m.price)} • ${statusPill}
+            </div>
+            ${m.image_url ? `<div class="text-xs text-neutral-500 break-all">Path: ${escapeHtml(m.image_url)}</div>` : ""}
           </div>
-          ${m.image_url ? `<div class="text-xs text-neutral-500 break-all">Img: ${m.image_url}</div>` : ""}
         </div>
 
-        <div class="flex gap-2">
+        <div class="flex gap-2 md:justify-end">
           <button class="toggle px-3 py-2 rounded-lg border text-sm bg-white hover:bg-neutral-100">
             ${m.is_available ? "Set Unavailable" : "Set Available"}
           </button>
