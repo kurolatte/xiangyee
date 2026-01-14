@@ -7,7 +7,6 @@ const path = require("path");
 const menuRoutes = require("./routes/menu.routes");
 const orderRoutes = require("./routes/orders.routes");
 const reservationRoutes = require("./routes/reservations.routes");
-const adminMenu = require("./routes/menu.admin.routes");
 const authRoutes = require("./routes/auth.routes");
 const instagramRoutes = require("./routes/instagram.routes");
 
@@ -23,7 +22,6 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reservations", reservationRoutes);
-app.use("/api/admin/menu", adminMenu);
 app.use("/api/auth", authRoutes);
 app.use("/api/instagram", instagramRoutes);
 
