@@ -506,7 +506,7 @@
 
     <div class="p-5 space-y-4">
       <div class="rounded-xl bg-neutral-50 border border-neutral-200 p-4">
-        <div class="text-sm text-neutral-500">Order ID</div>
+        <div class="text-sm text-neutral-500">Order Number</div>
         <div id="gw-order-id" class="font-mono font-semibold break-all">—</div>
 
         <div class="mt-3 text-sm text-neutral-500">Amount</div>
@@ -1016,26 +1016,27 @@
     document.body.classList.remove("overflow-hidden");
   }
 
-  // --------------------
-  // MOCK GATEWAY (IN-PAGE)
-  // --------------------
-  let pendingOrderId = null;
-  let pendingAmount = 0;
+// --------------------
+// MOCK GATEWAY (IN-PAGE)
+// --------------------
+let pendingOrderId = null;   // keep for backend tracking/receipt
+let pendingAmount = 0;
 
-  function openGateway(orderId, amount) {
-    pendingOrderId = orderId;
-    pendingAmount = Number(amount || 0);
+function openGateway(orderNo, amount, orderId) {
+  pendingOrderId = orderId;
+  pendingAmount = Number(amount || 0);
 
-    document.getElementById("gw-order-id").textContent = String(orderId);
-    document.getElementById("gw-amount").textContent = money(pendingAmount);
+  // ✅ show the SAME order number as "Order status & collection"
+  document.getElementById("gw-order-id").textContent = String(orderNo || "—");
+  document.getElementById("gw-amount").textContent = money(pendingAmount);
 
-    const statusEl = document.getElementById("gw-status");
-    statusEl.textContent = "Awaiting payment";
-    statusEl.className = "font-semibold text-amber-700";
+  const statusEl = document.getElementById("gw-status");
+  statusEl.textContent = "Awaiting payment";
+  statusEl.className = "font-semibold text-amber-700";
 
-    document.getElementById("gateway-modal").classList.remove("hidden");
-    document.body.classList.add("overflow-hidden");
-  }
+  document.getElementById("gateway-modal").classList.remove("hidden");
+  document.body.classList.add("overflow-hidden");
+}
 
   function closeGateway() {
     document.getElementById("gateway-modal").classList.add("hidden");
@@ -1175,7 +1176,7 @@
     closeCart();
 
     // show gateway first
-    openGateway(data.order_id, amount);
+    openGateway(data.order_no, amount, data.order_id);
     return;
   }
 
