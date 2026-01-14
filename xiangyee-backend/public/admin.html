@@ -108,10 +108,6 @@
             <div id="menu-count" class="text-sm text-neutral-600 md:text-right md:w-40">0 items</div>
           </div>
 
-          <div class="hidden mt-3 text-sm text-neutral-600">
-            Tip: “Remove” will hide it (set unavailable) so old orders don’t break.
-          </div>
-
           <div id="menu-list" class="mt-4 space-y-3"></div>
         </div>
       </div>
@@ -299,10 +295,58 @@
     return res;
   }
 
-  function safeParseItems(items) {
-    if (!items) return [];
-    if (Array.isArray(items)) return items;
-    try { return JSON.parse(items); } catch { return []; }
+  // =========================
+  // ✅ ORDER ITEMS FIX (robust)
+  // =========================
+  function safeParseJSON(value) {
+    if (value == null) return null;
+    if (typeof value === "object") return value;
+    if (typeof value !== "string") return null;
+    const s = value.trim();
+    if (!s) return null;
+    try { return JSON.parse(s); } catch { return null; }
+  }
+
+  function normalizeOrderItem(it) {
+    if (!it) return null;
+
+    const name =
+      it.name_en ||
+      it.name ||
+      it.menu_name ||
+      it.item_name ||
+      it.title ||
+      (it.menu_item_id ? `Item #${it.menu_item_id}` : null);
+
+    const qty = Number(it.quantity ?? it.qty ?? it.count ?? 1);
+    return { name: name || "Unknown item", quantity: isNaN(qty) ? 1 : qty };
+  }
+
+  function getOrderItems(order) {
+    const candidates = [
+      order.items,
+      order.order_items,
+      order.items_json,
+      order.itemsJson,
+      order.items_array,
+      order.itemsArray,
+    ];
+
+    for (const c of candidates) {
+      if (!c) continue;
+
+      const parsed = Array.isArray(c) ? c : safeParseJSON(c);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.map(normalizeOrderItem).filter(Boolean);
+        if (cleaned.length) return cleaned;
+      }
+
+      if (parsed && Array.isArray(parsed.items)) {
+        const cleaned = parsed.items.map(normalizeOrderItem).filter(Boolean);
+        if (cleaned.length) return cleaned;
+      }
+    }
+    return [];
   }
 
   // ====== LIVE TRACKING (orders/reservations) ======
@@ -368,7 +412,8 @@
     div.className = "p-4 rounded-xl border bg-neutral-50";
     applyUnreadStyle(div, unreadOrderIds.has(o.id));
 
-    const itemsArr = safeParseItems(o.items);
+    // ✅ FIX: use getOrderItems(o) instead of only o.items
+    const itemsArr = getOrderItems(o);
 
     div.innerHTML = `
       <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
@@ -398,7 +443,7 @@
           itemsArr.length
           ? itemsArr.map(it => `
               <div class="flex justify-between border-b py-1 last:border-b-0">
-                <span>${it.name_en || it.name || ("Item #" + it.menu_item_id)}</span>
+                <span>${it.name}</span>
                 <span>x${it.quantity}</span>
               </div>
             `).join("")
@@ -692,6 +737,7 @@
             ${m.is_available ? "Set Unavailable" : "Set Available"}
           </button>
 
+          <!-- ✅ Remove is hidden (Option B) -->
           <button class="del hidden px-3 py-2 rounded-lg border text-sm bg-white hover:bg-neutral-100">
             Remove
           </button>
@@ -699,10 +745,8 @@
       </div>
     `;
 
-    // ✅ Edit
     div.querySelector(".edit").onclick = () => openEditModal(m);
 
-    // Toggle availability
     div.querySelector(".toggle").onclick = async () => {
       await authedFetch(`${API_BASE}/menu/admin/${m.id}`, {
         method: "PUT",
@@ -713,16 +757,14 @@
       loadMenuAdmin(true);
     };
 
-    // ✅ SAFE REMOVE: hide only (no breaking old orders)
+    // kept but hidden
     div.querySelector(".del").onclick = async () => {
       if (!confirm(`Remove "${m.name_en}"? (This will hide it)`)) return;
-
       await authedFetch(`${API_BASE}/menu/admin/${m.id}`, {
         method: "PUT",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ is_available: false })
       });
-
       showToast("Menu item hidden", "success");
       loadMenuAdmin(true);
     };
