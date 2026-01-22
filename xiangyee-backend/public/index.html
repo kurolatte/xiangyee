@@ -30,6 +30,12 @@
     .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.08); }
     .no-scrollbar::-webkit-scrollbar { display:none; }
     .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+    .zoomable { cursor: zoom-in;transition: transform 220ms ease, box-shadow 220ms ease;will-change: transform; }
+    @media (hover: hover) and (pointer: fine) { .zoomable:hover { transform: scale(1.06); }
+  }
+
+  /* lightbox */
+  #img-lightbox.hidden { display: none; }
   </style>
 </head>
 
@@ -275,6 +281,48 @@
       <img class="rounded-2xl object-cover h-52 w-full shadow" src="/images/dishes/EggplantCenturyEgg.jpg" alt="Mashed Eggplant with Chili and Century Egg"/>
       <img class="rounded-2xl object-cover h-52 w-full shadow" src="/images/dishes/ChickenOldGinger.jpg" alt="Stir-Fried Chicken with Old Ginger"/>
       <img class="rounded-2xl object-cover h-52 w-full shadow" src="/images/dishes/FreshYellowBeef.jpg" alt="Stir-Fried Fresh Yellow Beef"/>
+    </div>
+  </section>
+
+  <!-- Instagram -->
+  <section id="instagram" class="bg-white border-y border-neutral-200">
+    <div class="max-w-6xl mx-auto px-4 py-16 md:py-24">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <div class="text-sm tracking-widest uppercase text-brand-red font-semibold mb-2">Instagram</div>
+        <h2 class="text-3xl md:text-4xl font-extrabold">Latest from @xiangyee.101</h2>
+        <p class="mt-3 text-neutral-600 leading-relaxed">
+          Fresh updates, spicy highlights, and behind-the-scenes.
+        </p>
+
+        <a
+          href="https://www.instagram.com/xiangyee.101/"
+          target="_blank"
+          rel="noreferrer"
+          class="inline-flex mt-4 px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red"
+        >
+          Follow on Instagram →
+        </a>
+      </div>
+
+      <div id="ig-error" class="hidden rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800 text-sm mb-4"></div>
+
+      <div id="ig-grid" class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="rounded-2xl border border-neutral-200 bg-neutral-50 p-6 text-neutral-500 text-sm">
+          Loading Instagram posts…
+        </div>
+      </div>
+
+      <div class="text-center mt-8">
+        <a
+          id="ig-more"
+          href="https://www.instagram.com/xiangyee.101/"
+          target="_blank"
+          rel="noreferrer"
+          class="inline-flex px-5 py-3 rounded-xl bg-black text-white font-semibold hover:bg-neutral-800"
+        >
+          View more on Instagram
+        </a>
+      </div>
     </div>
   </section>
 
@@ -529,6 +577,26 @@
       </div>
     </div>
   </div>
+
+<!-- Image Lightbox (for menu images) -->
+<div id="img-lightbox" class="hidden fixed inset-0 z-[120]">
+  <div id="img-lightbox-backdrop" class="absolute inset-0 bg-black/70"></div>
+
+  <div class="relative mx-auto mt-10 w-[94%] max-w-4xl">
+    <button id="img-lightbox-close"
+      class="absolute -top-10 right-0 text-white/90 hover:text-white text-3xl leading-none px-2">
+      ✕
+    </button>
+
+    <div class="rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10">
+      <img id="img-lightbox-img" src="" alt="Preview"
+           class="w-full max-h-[80vh] object-contain bg-black" />
+    </div>
+
+    <div id="img-lightbox-caption" class="mt-3 text-sm text-white/80"></div>
+  </div>
+</div>
+
 
   <!-- JavaScript -->
   <script>
@@ -918,8 +986,9 @@
             <div class="flex gap-3">
               <img
                 src="${imgUrl(item.image_url)}"
-                class="w-20 h-20 rounded-xl object-cover border border-neutral-200"
+                class="w-20 h-20 rounded-xl object-cover border border-neutral-200 zoomable menu-zoom-img"
                 alt="${item.name_en}"
+                data-caption="${(item.name_en || "").replace(/"/g, "&quot;")}"
               />
               <div>
                 <div class="font-semibold text-lg">${item.name_en}</div>
@@ -934,6 +1003,9 @@
               </button>
             </div>
           `;
+
+          const img = card.querySelector(".menu-zoom-img");
+          makeZoomable(img, item.name_en);
 
           card.querySelector("button").onclick = () => addToCart(item);
           list.appendChild(card);
@@ -1349,30 +1421,80 @@
       });
     }
 
+    // --------------------
+    // MENU IMAGE LIGHTBOX
+    // --------------------
+    function openLightbox(src, caption = "") {
+      const modal = document.getElementById("img-lightbox");
+      const img = document.getElementById("img-lightbox-img");
+      const cap = document.getElementById("img-lightbox-caption");
+      if (!modal || !img) return;
+
+      img.src = src;
+      cap.textContent = caption || "";
+
+      modal.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    }
+
+    function closeLightbox() {
+      const modal = document.getElementById("img-lightbox");
+      const img = document.getElementById("img-lightbox-img");
+      const cap = document.getElementById("img-lightbox-caption");
+      if (!modal) return;
+
+      modal.classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
+
+      if (img) img.src = "";
+      if (cap) cap.textContent = "";
+    }
+
+    function bindLightboxUI() {
+      document.getElementById("img-lightbox-backdrop")?.addEventListener("click", closeLightbox);
+      document.getElementById("img-lightbox-close")?.addEventListener("click", closeLightbox);
+
+      document.addEventListener("keydown", (e) => {
+        const modal = document.getElementById("img-lightbox");
+        if (!modal || modal.classList.contains("hidden")) return;
+        if (e.key === "Escape") closeLightbox();
+      });
+    }
+
+    function makeZoomable(imgEl, caption = "") {
+      if (!imgEl) return;
+
+      imgEl.classList.add("zoomable");
+      imgEl.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const src = imgEl.currentSrc || imgEl.src;
+        openLightbox(src, caption || imgEl.alt || "");
+      });
+    }
+
     function init() {
       $("#year").textContent = new Date().getFullYear();
 
       loadCart();
       renderCart();
       updateCartCount();
-      updateFloatingCart(); // ✅ ensure correct visibility on load
+      updateFloatingCart();
 
       bindUI();
       bindReservationSlotsUI();
+      
+      bindLightboxUI();
 
-      fetchMenu().catch((err) => {
-        console.error(err);
-        $("#menu-sections").innerHTML = `
-          <div class="text-red-600 text-sm">
-            Menu loading failed. Make sure backend is running,
-            and open this site using Live Server (http://), not file://
-          </div>`;
-      });
+      fetchMenu().catch((err) => { /* ... */ });
 
       $("#order-form").addEventListener("submit", submitOrder);
       $("#reserve-form").addEventListener("submit", submitReservation);
 
       loadMyOrderFromDevice();
+
+      // ✅ Add this:
+      loadInstagramFeed();
     }
 
     init();
@@ -1428,6 +1550,89 @@
 
       go(0);
     })();
+
+    // --------------------
+    // INSTAGRAM FEED (dynamic)
+    // --------------------
+    async function loadInstagramFeed() {
+      const grid = document.getElementById("ig-grid");
+      const errBox = document.getElementById("ig-error");
+      if (!grid) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/instagram/media?limit=8`);
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error(`Instagram API failed (${res.status}). ${txt}`);
+        }
+
+        const data = await res.json();
+        const posts = Array.isArray(data.data) ? data.data : [];
+
+        if (!posts.length) {
+          grid.innerHTML = `
+            <div class="rounded-2xl border border-neutral-200 bg-neutral-50 p-6 text-neutral-500 text-sm">
+              No Instagram posts found yet.
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = posts.map((p) => {
+          const type = String(p.media_type || "").toUpperCase();
+          const thumb = p.thumbnail_url || p.media_url; // videos use thumbnail_url
+          const caption = (p.caption || "").trim();
+          const safeCaption = caption
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .slice(0, 120);
+
+          return `
+            <a
+              href="${p.permalink}"
+              target="_blank"
+              rel="noreferrer"
+              class="group rounded-2xl overflow-hidden border border-neutral-200 bg-white shadow-soft hover:shadow-md transition"
+              title="${caption ? caption.replace(/"/g, "&quot;") : "Open on Instagram"}"
+            >
+              <div class="relative">
+                <img
+                  src="${thumb}"
+                  alt="${safeCaption || "Instagram post"}"
+                  class="w-full h-52 object-cover"
+                  loading="lazy"
+                />
+                <div class="absolute left-2 top-2 text-xs font-semibold px-2 py-1 rounded-full bg-white/90 border border-neutral-200">
+                  ${type === "VIDEO" ? "Video" : type === "CAROUSEL_ALBUM" ? "Album" : "Post"}
+                </div>
+              </div>
+              <div class="p-3 text-sm text-neutral-700">
+                <div class="line-clamp-2">${safeCaption || "View on Instagram →"}</div>
+                ${p.timestamp ? `<div class="mt-2 text-xs text-neutral-500">${new Date(p.timestamp).toLocaleDateString()}</div>` : ""}
+              </div>
+            </a>
+          `;
+        }).join("");
+
+      } catch (e) {
+        console.error(e);
+
+        if (errBox) {
+          errBox.textContent =
+            "Instagram feed is unavailable right now. Please try again later.";
+          errBox.classList.remove("hidden");
+        }
+
+        // fallback to keep UI nice
+        grid.innerHTML = `
+          <div class="rounded-2xl border border-neutral-200 bg-neutral-50 p-6 text-neutral-500 text-sm">
+            Unable to load Instagram posts.
+          </div>
+        `;
+      }
+    }
+
   </script>
 
 </body>

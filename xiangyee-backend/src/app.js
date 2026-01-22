@@ -8,7 +8,7 @@ const menuRoutes = require("./routes/menu.routes");
 const orderRoutes = require("./routes/orders.routes");
 const reservationRoutes = require("./routes/reservations.routes");
 const authRoutes = require("./routes/auth.routes");
-const instagramRoutes = require("./routes/instagram.routes");
+const instagramRoute = require("./routes/instagram");
 
 const app = express();
 
@@ -23,7 +23,7 @@ app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reservations", reservationRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/instagram", instagramRoutes);
+app.use("/api/instagram", instagramRoute);
 
 // ✅ Optional health check (safe)
 app.get("/health", (req, res) => {
