@@ -1228,6 +1228,7 @@
     }
 
     function closePayModal() {
+      resetPayForm();
       document.getElementById("pay-modal").classList.add("hidden");
       document.body.classList.remove("overflow-hidden");
     }
@@ -1322,6 +1323,7 @@
           return showPayError(data?.payment?.failure_reason || "Card declined (mock).");
         }
 
+        resetPayForm();
         // ✅ success → go to My Order
         closePayModal();
         showMyOrderTab();
@@ -1336,6 +1338,24 @@
         loading.classList.add("hidden");
       }
     }
+
+    function resetPayForm() {
+      document.getElementById("pay-name").value = "";
+      document.getElementById("pay-card").value = "";
+      document.getElementById("pay-exp").value = "";
+      document.getElementById("pay-cvv").value = "";
+
+      const err = document.getElementById("pay-error");
+      err.textContent = "";
+      err.classList.add("hidden");
+
+      document.getElementById("pay-loading").classList.add("hidden");
+
+      const btn = document.getElementById("pay-submit");
+      btn.disabled = false;
+      btn.textContent = "Pay Now";
+    }
+
 
     function bindUI() {
       $("#mobile-btn").onclick = () => $("#mobile-nav").classList.toggle("hidden");
