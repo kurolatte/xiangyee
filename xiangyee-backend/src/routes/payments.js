@@ -56,7 +56,7 @@ router.post("/charge", async (req, res) => {
     const last4 = normalized.slice(-4);
     const brand = detectBrand(card);
 
-    const ok = luhnValid(card) && Number(amount_cents) > 0;
+    const ok = Number(amount_cents) > 0; // ✅ ANY card number accepted
 
     return res.json({
       payment: {
