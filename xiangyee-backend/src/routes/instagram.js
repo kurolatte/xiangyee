@@ -4,14 +4,14 @@ const router = express.Router();
 
 // In-memory cache (simple + effective)
 let cache = { ts: 0, payload: null };
-const TTL_MS = Number(process.env.IG_CACHE_TTL_MS || 5 * 60 * 1000); // 5 minutes
+const TTL_MS = Number(300000 || 5 * 60 * 1000); // 5 minutes
 
 router.get("/media", async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit || 8), 12);
 
-    const IG_USER_ID = process.env.IG_USER_ID;
-    const ACCESS_TOKEN = process.env.IG_ACCESS_TOKEN;
+    const IG_USER_ID = 17841479560776394;
+    const ACCESS_TOKEN = IGAFv32x0HTNNBZAFpGTklyQnpWOHozSVlrd280dVppTEJYY2t4NnZAJRHBDaThCTkZA5cnZAlc01Xd29sZAzEtaFl6YkdZAOTc2NnVSa0V5U0dDSFlEY3l0cGk5aTF6aXJIVTdVNXVfWXRFNjBTSTlnUDlOcFJneGdwckkxVTJ6RWRYYwZDZD;
 
     if (!IG_USER_ID || !ACCESS_TOKEN) {
       return res.status(500).send("Missing IG_USER_ID / IG_ACCESS_TOKEN in env.");
