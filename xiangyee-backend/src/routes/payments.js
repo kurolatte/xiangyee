@@ -1,6 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const { v4: uuidv4 } = require("uuid");
+
+// ✅ no uuid dependency
+function makeRef() {
+  return (
+    "MOCK_" +
+    Date.now().toString(36).toUpperCase() +
+    "_" +
+    Math.floor(Math.random() * 1000000).toString().padStart(6, "0")
+  );
+}
 
 // Detect card brand (simple)
 function detectBrand(cardNumber) {
@@ -34,7 +43,9 @@ router.post("/charge", async (req, res) => {
     const { order_id, amount_cents, card_number } = req.body || {};
 
     if (!order_id || !amount_cents || !card_number) {
-      return res.status(400).json({ error: "Missing order_id / amount_cents / card_number" });
+      return res
+        .status(400)
+        .json({ error: "Missing order_id / amount_cents / card_number" });
     }
 
     // 🔒 Currency locked to SGD
@@ -45,10 +56,7 @@ router.post("/charge", async (req, res) => {
     const last4 = normalized.slice(-4);
     const brand = detectBrand(card);
 
-    // Mock logic
     const ok = luhnValid(card) && Number(amount_cents) > 0;
-
-    const transaction_ref = `MOCK_${uuidv4().replace(/-/g, "").slice(0, 16)}`;
 
     return res.json({
       payment: {
@@ -58,7 +66,7 @@ router.post("/charge", async (req, res) => {
         card_brand: brand,
         card_last4: last4,
         status: ok ? "success" : "failed",
-        transaction_ref,
+        transaction_ref: makeRef(),
         created_at: new Date().toISOString(),
       },
       message: ok ? "Payment successful (mock)" : "Payment failed (mock)",
