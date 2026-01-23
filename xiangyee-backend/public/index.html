@@ -1107,6 +1107,31 @@
       document.body.classList.remove("overflow-hidden");
     }
 
+    async function submitMockPayment({ orderId, amountCents }) {
+      const cardNumber = document.getElementById("card-number").value;
+
+      const res = await fetch(`${API_BASE}/payments/charge`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: orderId,
+          amount_cents: amountCents,
+          card_number: cardNumber,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Payment failed");
+
+      if (data.payment.status !== "success") {
+        throw new Error("Card declined (mock)");
+      }
+
+      return data.payment;
+    }
+
+
     function bindUI() {
       $("#mobile-btn").onclick = () => $("#mobile-nav").classList.toggle("hidden");
       $("#mobile-nav")
