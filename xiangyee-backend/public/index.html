@@ -532,7 +532,7 @@
   </button>
 
   <!-- Mock Gateway Modal -->
-  <div id="gateway-modal" class="fixed inset-0 z-[80] hidden">
+  <!-- <div id="gateway-modal" class="fixed inset-0 z-[80] hidden">
     <div id="gateway-backdrop" class="absolute inset-0 bg-black/50"></div>
 
     <div class="relative mx-auto mt-24 w-[92%] max-w-md rounded-2xl bg-white shadow-2xl border border-neutral-200 overflow-hidden">
@@ -576,7 +576,75 @@
         </p>
       </div>
     </div>
+  </div> -->
+
+    <!-- Simple Payment Modal (Mock) -->
+  <div id="pay-modal" class="fixed inset-0 z-[90] hidden">
+    <div id="pay-backdrop" class="absolute inset-0 bg-black/50"></div>
+
+    <div class="relative mx-auto mt-20 w-[92%] max-w-md rounded-2xl bg-white shadow-2xl border border-neutral-200 overflow-hidden">
+      <div class="p-4 border-b border-neutral-200 flex items-center justify-between">
+        <div>
+          <div class="font-bold">Payment (Mock)</div>
+          <div class="text-xs text-neutral-500">Currency: SGD</div>
+        </div>
+        <button id="pay-close" class="p-2 rounded-lg hover:bg-neutral-100">✕</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="rounded-xl bg-neutral-50 border border-neutral-200 p-4">
+          <div class="text-sm text-neutral-500">Order Number</div>
+          <div id="pay-order-no" class="font-mono font-semibold break-all">—</div>
+
+          <div class="mt-3 text-sm text-neutral-500">Amount</div>
+          <div id="pay-amount" class="text-2xl font-black">SGD $0.00</div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-neutral-700">Name on Card</label>
+          <input id="pay-name" type="text" placeholder="e.g. Lim Wei Qi"
+            class="w-full border border-neutral-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red" />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-neutral-700">Card Number</label>
+          <input id="pay-card" type="text" inputmode="numeric" placeholder="4242 4242 4242 4242" maxlength="19"
+            class="w-full border border-neutral-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red" />
+          <div class="text-xs text-neutral-500">Test card: 4242 4242 4242 4242 (success)</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-700">Expiry</label>
+            <input id="pay-exp" type="text" placeholder="MM/YY" maxlength="5"
+              class="w-full border border-neutral-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red" />
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-700">CVV</label>
+            <input id="pay-cvv" type="password" inputmode="numeric" placeholder="123" maxlength="4"
+              class="w-full border border-neutral-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red" />
+          </div>
+        </div>
+
+        <div id="pay-error" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"></div>
+
+        <button id="pay-submit"
+          class="w-full px-4 py-3 rounded-xl bg-brand-red text-white font-semibold hover:bg-red-700">
+          Pay Now
+        </button>
+
+        <div id="pay-loading" class="hidden text-center text-sm text-neutral-500">
+          Processing payment...
+        </div>
+
+        <p class="text-xs text-neutral-500">
+          Demo only. No real payment is processed.
+        </p>
+      </div>
+    </div>
   </div>
+
 
 <!-- Image Lightbox (for menu images) -->
 <div id="img-lightbox" class="hidden fixed inset-0 z-[120]">
@@ -1080,55 +1148,165 @@
       document.body.classList.remove("overflow-hidden");
     }
 
+    // // --------------------
+    // // MOCK GATEWAY (IN-PAGE)
+    // // --------------------
+    // let pendingOrderId = null;   // keep for backend tracking/receipt
+    // let pendingAmount = 0;
+
+    // // ✅ show SAME order number as "Order status & collection"
+    // function openGateway(orderNo, amount, orderId) {
+    //   pendingOrderId = orderId;
+    //   pendingAmount = Number(amount || 0);
+
+    //   document.getElementById("gw-order-id").textContent = String(orderNo || "—");
+    //   document.getElementById("gw-amount").textContent = money(pendingAmount);
+
+    //   const statusEl = document.getElementById("gw-status");
+    //   statusEl.textContent = "Awaiting payment";
+    //   statusEl.className = "font-semibold text-amber-700";
+
+    //   document.getElementById("gateway-modal").classList.remove("hidden");
+    //   document.body.classList.add("overflow-hidden");
+    // }
+
+    // function closeGateway() {
+    //   document.getElementById("gateway-modal").classList.add("hidden");
+    //   document.body.classList.remove("overflow-hidden");
+    // }
+
+    // async function submitMockPayment({ orderId, amountCents }) {
+    //   const cardNumber = document.getElementById("card-number").value;
+
+    //   const res = await fetch(`${API_BASE}/payments/charge`, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       order_id: orderId,
+    //       amount_cents: amountCents,
+    //       card_number: cardNumber,
+    //     }),
+    //   });
+
+    //   const data = await res.json();
+
+    //   if (!res.ok) throw new Error(data.error || "Payment failed");
+
+    //   if (data.payment.status !== "success") {
+    //     throw new Error("Card declined (mock)");
+    //   }
+
+    //   return data.payment;
+    // }
+
     // --------------------
-    // MOCK GATEWAY (IN-PAGE)
+    // ✅ SIMPLE PAYMENT MODAL (IN-PAGE, NO BACKEND)
     // --------------------
-    let pendingOrderId = null;   // keep for backend tracking/receipt
+    let pendingOrderId = null;
+    let pendingOrderNo = null;
     let pendingAmount = 0;
 
-    // ✅ show SAME order number as "Order status & collection"
-    function openGateway(orderNo, amount, orderId) {
+    function openPayModal(orderNo, amount, orderId) {
       pendingOrderId = orderId;
+      pendingOrderNo = orderNo;
       pendingAmount = Number(amount || 0);
 
-      document.getElementById("gw-order-id").textContent = String(orderNo || "—");
-      document.getElementById("gw-amount").textContent = money(pendingAmount);
+      document.getElementById("pay-order-no").textContent = String(orderNo || "—");
+      document.getElementById("pay-amount").textContent = `SGD ${money(pendingAmount)}`;
 
-      const statusEl = document.getElementById("gw-status");
-      statusEl.textContent = "Awaiting payment";
-      statusEl.className = "font-semibold text-amber-700";
+      // reset UI
+      document.getElementById("pay-error").classList.add("hidden");
+      document.getElementById("pay-error").textContent = "";
+      document.getElementById("pay-loading").classList.add("hidden");
 
-      document.getElementById("gateway-modal").classList.remove("hidden");
+      const btn = document.getElementById("pay-submit");
+      btn.disabled = false;
+      btn.textContent = "Pay Now";
+
+      document.getElementById("pay-modal").classList.remove("hidden");
       document.body.classList.add("overflow-hidden");
     }
 
-    function closeGateway() {
-      document.getElementById("gateway-modal").classList.add("hidden");
+    function closePayModal() {
+      document.getElementById("pay-modal").classList.add("hidden");
       document.body.classList.remove("overflow-hidden");
     }
 
-    async function submitMockPayment({ orderId, amountCents }) {
-      const cardNumber = document.getElementById("card-number").value;
+    function showPayError(msg) {
+      const el = document.getElementById("pay-error");
+      el.textContent = msg;
+      el.classList.remove("hidden");
+    }
 
-      const res = await fetch(`${API_BASE}/payments/charge`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          order_id: orderId,
-          amount_cents: amountCents,
-          card_number: cardNumber,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || "Payment failed");
-
-      if (data.payment.status !== "success") {
-        throw new Error("Card declined (mock)");
+    function luhnValid(num) {
+      const s = num.replace(/\s+/g, "");
+      if (!/^\d{12,19}$/.test(s)) return false;
+      let sum = 0, alt = false;
+      for (let i = s.length - 1; i >= 0; i--) {
+        let n = parseInt(s[i], 10);
+        if (alt) {
+          n *= 2;
+          if (n > 9) n -= 9;
+        }
+        sum += n;
+        alt = !alt;
       }
+      return sum % 10 === 0;
+    }
 
-      return data.payment;
+    function formatCardInput() {
+      const el = document.getElementById("pay-card");
+      if (!el) return;
+      el.addEventListener("input", () => {
+        const v = el.value.replace(/\D/g, "").slice(0, 16);
+        el.value = v.replace(/(\d{4})(?=\d)/g, "$1 ");
+      });
+    }
+
+    function formatExpInput() {
+      const el = document.getElementById("pay-exp");
+      if (!el) return;
+      el.addEventListener("input", () => {
+        let v = el.value.replace(/\D/g, "").slice(0, 4);
+        if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
+        el.value = v;
+      });
+    }
+
+    async function processMockPayment() {
+      const name = document.getElementById("pay-name").value.trim();
+      const card = document.getElementById("pay-card").value.trim();
+      const exp = document.getElementById("pay-exp").value.trim();
+      const cvv = document.getElementById("pay-cvv").value.trim();
+
+      document.getElementById("pay-error").classList.add("hidden");
+
+      if (!name) return showPayError("Please enter name on card.");
+      if (!card) return showPayError("Please enter card number.");
+      if (!luhnValid(card)) return showPayError("Card declined (mock). Try 4242 4242 4242 4242.");
+      if (!/^\d{2}\/\d{2}$/.test(exp)) return showPayError("Please enter expiry in MM/YY.");
+      if (!/^\d{3,4}$/.test(cvv)) return showPayError("Please enter a valid CVV.");
+
+      const btn = document.getElementById("pay-submit");
+      const loading = document.getElementById("pay-loading");
+
+      btn.disabled = true;
+      btn.textContent = "Processing...";
+      loading.classList.remove("hidden");
+
+      // fake processing delay
+      await new Promise((r) => setTimeout(r, 900));
+
+      // ✅ success → go to My Order
+      closePayModal();
+
+      showMyOrderTab();
+      window.location.hash = "my-order";
+      loadMyOrderFromDevice();
+
+      btn.disabled = false;
+      btn.textContent = "Pay Now";
+      loading.classList.add("hidden");
     }
 
 
@@ -1144,35 +1322,43 @@
       // ✅ Floating cart
       document.getElementById("floating-cart").onclick = openCart;
 
-      // Gateway bindings
-      document.getElementById("gateway-backdrop").onclick = closeGateway;
-      document.getElementById("gateway-close").onclick = closeGateway;
-      document.getElementById("gw-cancel").onclick = closeGateway;
+      // // Gateway bindings
+      // document.getElementById("gateway-backdrop").onclick = closeGateway;
+      // document.getElementById("gateway-close").onclick = closeGateway;
+      // document.getElementById("gw-cancel").onclick = closeGateway;
 
-      document.getElementById("gw-pay").onclick = async () => {
-        const payBtn = document.getElementById("gw-pay");
-        const statusEl = document.getElementById("gw-status");
+      // document.getElementById("gw-pay").onclick = async () => {
+      //   const payBtn = document.getElementById("gw-pay");
+      //   const statusEl = document.getElementById("gw-status");
 
-        statusEl.textContent = "Processing...";
-        statusEl.className = "font-semibold text-neutral-700";
-        payBtn.disabled = true;
+      //   statusEl.textContent = "Processing...";
+      //   statusEl.className = "font-semibold text-neutral-700";
+      //   payBtn.disabled = true;
 
-        setTimeout(() => {
-          statusEl.textContent = "Payment success ✅";
-          statusEl.className = "font-semibold text-green-700";
+      //   setTimeout(() => {
+      //     statusEl.textContent = "Payment success ✅";
+      //     statusEl.className = "font-semibold text-green-700";
 
-          setTimeout(() => {
-            closeGateway();
+      //     setTimeout(() => {
+      //       closeGateway();
 
-            // after payment -> show my order
-            showMyOrderTab();
-            window.location.hash = "my-order";
-            loadMyOrderFromDevice();
+      //       // after payment -> show my order
+      //       showMyOrderTab();
+      //       window.location.hash = "my-order";
+      //       loadMyOrderFromDevice();
 
-            payBtn.disabled = false;
-          }, 600);
-        }, 900);
-      };
+      //       payBtn.disabled = false;
+      //     }, 600);
+      //   }, 900);
+      // };
+      // ✅ Payment modal bindings
+      document.getElementById("pay-backdrop").onclick = closePayModal;
+      document.getElementById("pay-close").onclick = closePayModal;
+      document.getElementById("pay-submit").onclick = processMockPayment;
+
+      formatCardInput();
+      formatExpInput();
+
     }
 
     // CREATE ORDER -> show mock gateway BEFORE navigating to #my-order
@@ -1268,7 +1454,8 @@
       closeCart();
 
       // show gateway first (✅ show order_no, not order_id)
-      openGateway(data.order_no, amount, data.order_id);
+      // openGateway(data.order_no, amount, data.order_id);
+      openPayModal(data.order_no, amount, data.order_id);
       return;
     }
 
