@@ -1283,7 +1283,11 @@
 
       if (!name) return showPayError("Please enter name on card.");
       if (!card) return showPayError("Please enter card number.");
-      if (!luhnValid(card)) return showPayError("Card declined (mock). Try 4242 4242 4242 4242.");
+
+      const normalized = card.replace(/\s+/g, "");
+      if (!/^\d{16}$/.test(normalized)) return showPayError("Card number must be exactly 16 digits.");
+      if (normalized === "4242424242424242") return showPayError("Card declined (mock). Please use another card.");
+
       if (!/^\d{2}\/\d{2}$/.test(exp)) return showPayError("Please enter expiry in MM/YY.");
       if (!/^\d{3,4}$/.test(cvv)) return showPayError("Please enter a valid CVV.");
 
@@ -1294,21 +1298,44 @@
       btn.textContent = "Processing...";
       loading.classList.remove("hidden");
 
-      // fake processing delay
-      await new Promise((r) => setTimeout(r, 900));
+      try {
+        // convert dollars to cents
+        const amountCents = Math.round(Number(pendingAmount || 0) * 100);
 
-      // ✅ success → go to My Order
-      closePayModal();
+        const res = await fetch(`${API_BASE}/payments/charge`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_id: pendingOrderId,
+            amount_cents: amountCents,
+            card_number: normalized,
+          }),
+        });
 
-      showMyOrderTab();
-      window.location.hash = "my-order";
-      loadMyOrderFromDevice();
+        const data = await res.json().catch(() => ({}));
 
-      btn.disabled = false;
-      btn.textContent = "Pay Now";
-      loading.classList.add("hidden");
+        if (!res.ok) {
+          return showPayError(data.error || "Payment failed (mock).");
+        }
+
+        if (data?.payment?.status !== "success") {
+          return showPayError(data?.payment?.failure_reason || "Card declined (mock).");
+        }
+
+        // ✅ success → go to My Order
+        closePayModal();
+        showMyOrderTab();
+        window.location.hash = "my-order";
+        loadMyOrderFromDevice();
+      } catch (e) {
+        console.error(e);
+        return showPayError("Network error. Please try again.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Pay Now";
+        loading.classList.add("hidden");
+      }
     }
-
 
     function bindUI() {
       $("#mobile-btn").onclick = () => $("#mobile-nav").classList.toggle("hidden");
