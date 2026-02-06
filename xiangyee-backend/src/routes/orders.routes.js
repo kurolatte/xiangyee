@@ -4,7 +4,73 @@ const { pool } = require("../db");
 const { z } = require("zod");
 const { requireAuth } = require("../middleware/auth");
 
+// ✅ ADD: jwt for verifying SSE token
+const jwt = require("jsonwebtoken");
+
 const router = express.Router();
+
+/* =========================
+   ✅ SSE: REAL-TIME PUSH (ADMIN)
+========================= */
+const sseClients = new Set();
+
+function sseSend(res, event, data) {
+  res.write(`event: ${event}\n`);
+  res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+function broadcast(event, data) {
+  for (const client of sseClients) {
+    try {
+      sseSend(client, event, data);
+    } catch {
+      // ignore broken clients
+    }
+  }
+}
+
+// keep-alive ping (helps with proxies)
+setInterval(() => {
+  for (const client of sseClients) {
+    try {
+      client.write(`: ping\n\n`);
+    } catch {}
+  }
+}, 25000);
+
+/* =========================
+   ✅ ADMIN: SSE STREAM
+   GET /api/orders/stream?token=JWT
+========================= */
+router.get("/stream", (req, res) => {
+  try {
+    const token = String(req.query.token || "");
+    if (!token) return res.status(401).json({ message: "No token" });
+
+    // verify token (same secret as your normal auth)
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Optional: enforce admin role if present in token
+    // if (payload?.role !== "admin") return res.status(403).json({ message: "Admin only" });
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no"); // nginx: disable buffering
+
+    res.flushHeaders?.();
+
+    sseSend(res, "connected", { ok: true, at: Date.now() });
+
+    sseClients.add(res);
+
+    req.on("close", () => {
+      sseClients.delete(res);
+    });
+  } catch (e) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+});
 
 /* =========================
    ORDER VALIDATION
@@ -128,13 +194,23 @@ router.post("/", async (req, res) => {
 
     await client.query("COMMIT");
 
+    // ✅ PUSH EVENT: new order created
+    broadcast("orders_updated", {
+      action: "created",
+      order_id: orderId,
+      order_no: orderNo,
+      at: Date.now(),
+    });
+
     return res.status(201).json({
       order_id: orderId,
       order_no: orderNo,
       total_amount: total,
     });
   } catch (e) {
-    try { await client.query("ROLLBACK"); } catch {}
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
     return res.status(400).json({ error: e.message });
   } finally {
     client.release();
@@ -216,6 +292,13 @@ router.post("/:id(\\d+)/collected", async (req, res) => {
     if (upd.rowCount === 0) {
       return res.status(404).json({ error: "Order not found" });
     }
+
+    // ✅ PUSH EVENT: order collected
+    broadcast("orders_updated", {
+      action: "collected",
+      order_id: id,
+      at: Date.now(),
+    });
 
     const updatedOrderRes = await pool.query(`SELECT * FROM orders WHERE id = $1`, [id]);
 
@@ -334,6 +417,14 @@ router.put("/:id(\\d+)", requireAuth, async (req, res) => {
     if (r.rowCount === 0) {
       return res.status(404).json({ error: "Order not found" });
     }
+
+    // ✅ PUSH EVENT: status updated by admin
+    broadcast("orders_updated", {
+      action: "status_updated",
+      order_id: id,
+      status,
+      at: Date.now(),
+    });
 
     return res.json({ message: "Order status updated" });
   } catch (e) {

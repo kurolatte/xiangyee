@@ -227,10 +227,43 @@
     logoutBtn.classList.toggle("hidden", !authed);
   }
 
+  // =========================
+  // ✅ SSE: Real-time push for Orders
+  // =========================
+  let ordersStream = null;
+
+  function setupOrdersStream() {
+    clearOrdersStream();
+    if (!token) return;
+
+    const streamUrl = `${API_BASE}/orders/stream?token=${encodeURIComponent(token)}`;
+    ordersStream = new EventSource(streamUrl);
+
+    ordersStream.addEventListener("connected", () => {
+      // console.log("Orders SSE connected");
+    });
+
+    ordersStream.addEventListener("orders_updated", () => {
+      loadOrders(false); // refresh instantly when pushed
+    });
+
+    ordersStream.onerror = () => {
+      // console.log("Orders SSE error, auto-retrying...");
+    };
+  }
+
+  function clearOrdersStream() {
+    if (ordersStream) {
+      ordersStream.close();
+      ordersStream = null;
+    }
+  }
+
   function doLogout() {
     token = null;
     localStorage.removeItem("xiangyee_token");
     clearAutoRefresh();
+    clearOrdersStream(); // ✅ stop SSE
     setAuthedUI(false);
   }
 
@@ -270,7 +303,9 @@
       loadOrders(true);
       loadReservations(true);
       loadMenuAdmin(true);
+
       setupAutoRefresh();
+      setupOrdersStream(); // ✅ start SSE
 
     } catch (err) {
       console.error(err);
@@ -412,7 +447,6 @@
     div.className = "p-4 rounded-xl border bg-neutral-50";
     applyUnreadStyle(div, unreadOrderIds.has(o.id));
 
-    // ✅ FIX: use getOrderItems(o) instead of only o.items
     const itemsArr = getOrderItems(o);
 
     div.innerHTML = `
@@ -632,7 +666,6 @@
       .replaceAll("'", "&#039;");
   }
 
-  // ✅ Edit modal wiring
   const editModal = document.getElementById("edit-modal");
   const editClose = document.getElementById("edit-close");
   const editBackdrop = document.getElementById("edit-backdrop");
@@ -737,7 +770,6 @@
             ${m.is_available ? "Set Unavailable" : "Set Available"}
           </button>
 
-          <!-- ✅ Remove is hidden (Option B) -->
           <button class="del hidden px-3 py-2 rounded-lg border text-sm bg-white hover:bg-neutral-100">
             Remove
           </button>
@@ -757,7 +789,6 @@
       loadMenuAdmin(true);
     };
 
-    // kept but hidden
     div.querySelector(".del").onclick = async () => {
       if (!confirm(`Remove "${m.name_en}"? (This will hide it)`)) return;
       await authedFetch(`${API_BASE}/menu/admin/${m.id}`, {
@@ -818,7 +849,6 @@
     }
   }
 
-  // ====== ADD MENU ITEM ======
   const menuForm = document.getElementById("menu-form");
   menuForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -856,7 +886,6 @@
     }
   });
 
-  // filters
   document.getElementById("menu-refresh").onclick = () => loadMenuAdmin(true);
   document.getElementById("menu-search").addEventListener("input", refreshMenuView);
   document.getElementById("menu-category").addEventListener("change", refreshMenuView);
@@ -865,9 +894,14 @@
   // ====== AUTO REFRESH ======
   function setupAutoRefresh() {
     clearAutoRefresh();
-    ordersInterval = setInterval(() => { if (token) loadOrders(false); }, 5000);
+
+    // ✅ Orders polling is now just fallback (SSE handles real-time)
+    ordersInterval = setInterval(() => { if (token) loadOrders(false); }, 30000);
+
+    // Reservations still poll
     resInterval = setInterval(() => { if (token) loadReservations(false); }, 5000);
   }
+
   function clearAutoRefresh() {
     if (ordersInterval) clearInterval(ordersInterval);
     if (resInterval) clearInterval(resInterval);
@@ -875,7 +909,6 @@
     resInterval = null;
   }
 
-  // ====== WIRE EVENTS ======
   document.getElementById("login-form").addEventListener("submit", login);
   logoutBtn.onclick = doLogout;
 
@@ -885,6 +918,7 @@
     loadReservations(true);
     loadMenuAdmin(true);
     setupAutoRefresh();
+    setupOrdersStream(); // ✅ start SSE on reload
   } else {
     setAuthedUI(false);
   }
