@@ -18,6 +18,7 @@
       theme: {
         extend: {
           fontFamily: {
+            // ✅ Use dynasty fonts as your default
             sans: ['"Noto Serif SC"', '"ZCOOL XiaoWei"', 'serif'],
             dynasty: ['"ZCOOL XiaoWei"', '"Noto Serif SC"', 'serif'],
           },
@@ -37,11 +38,13 @@
     .zoomable { cursor: zoom-in;transition: transform 220ms ease, box-shadow 220ms ease;will-change: transform; }
     @media (hover: hover) and (pointer: fine) { .zoomable:hover { transform: scale(1.06); }
   }
+  /* ✅ Dynasty headings */
   h1, h2, h3, .dynasty-title {
     font-family: "ZCOOL XiaoWei", "Noto Serif SC", serif !important;
     letter-spacing: 0.03em;
   }
 
+  /* ✅ Body text: elegant serif but readable */
   body {
     font-family: "Noto Serif SC", ui-sans-serif, system-ui, serif !important;
   }
@@ -79,6 +82,12 @@
 
       <!-- Actions (desktop) + mobile menu -->
       <div class="flex items-center gap-2">
+        <!-- Desktop My Order -->
+        <a id="my-order-btn"
+           href="#my-order"
+           class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
+          My Order
+        </a>
 
         <!-- Desktop Cart -->
         <button id="cart-btn"
@@ -487,7 +496,7 @@
     </div>
   </footer>
 
-  <!-- Cart Drawer -->
+  <!-- Cart Drawer (KEEP ONLY THIS ONE) -->
   <aside id="cart-drawer"
     class="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white border-l border-neutral-200 shadow-2xl translate-x-full transition-transform duration-300 z-[100] flex flex-col">
 
@@ -552,7 +561,7 @@
 
   <div id="drawer-backdrop" class="fixed inset-0 bg-black/40 z-[55] hidden"></div>
 
-  <!-- Floating Cart Button (appears only when cart has items) -->
+  <!-- ✅ Floating Cart Button (appears only when cart has items) -->
   <button id="floating-cart"
     class="hidden fixed bottom-5 right-5 z-[70] rounded-full bg-brand-red text-white shadow-soft border border-red-700/20
            px-4 py-3 flex items-center gap-2 hover:bg-red-700 active:scale-95 transition">
@@ -677,7 +686,7 @@
     let menuItems = [];
     let cart = [];
 
-    // CART STORAGE (ensure numeric ids/qty/price)
+    // CART STORAGE (HARDENED: ensure numeric ids/qty/price)
     function saveCart() {
       localStorage.setItem("xiangyee_cart", JSON.stringify(cart));
     }
@@ -704,7 +713,7 @@
       }
     }
 
-    // FLOATING CART BUTTON
+    // ✅ FLOATING CART BUTTON
     function updateFloatingCart() {
       const btn = document.getElementById("floating-cart");
       const badge = document.getElementById("floating-cart-count");
@@ -718,248 +727,245 @@
     }
 
     // MY ORDER
-   // MY ORDER (REAL-TIME via SSE, NO POLLING)
-const LAST_ORDER_KEY = "xiangyee_last_order";
-let orderStream = null;            // EventSource instance
-let activeOrderId = null;
-let streamRetryTimer = null;
+    const LAST_ORDER_KEY = "xiangyee_last_order";
+    let orderPollTimer = null;
+    const ORDER_POLL_MS = 4000;
 
-function saveLastOrder(o) {
-  localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(o));
-}
-function loadLastOrder() {
-  try {
-    return JSON.parse(localStorage.getItem(LAST_ORDER_KEY)) || null;
-  } catch {
-    return null;
-  }
-}
-
-function showMyOrderTab() {
-  document.getElementById("my-order")?.classList.remove("hidden");
-  document.getElementById("my-order-footer")?.classList.remove("hidden");
-  document.getElementById("my-order-btn-mobile")?.classList.remove("hidden");
-}
-function hideMyOrderTab() {
-  document.getElementById("my-order")?.classList.add("hidden");
-  document.getElementById("my-order-footer")?.classList.add("hidden");
-  document.getElementById("my-order-btn-mobile")?.classList.add("hidden");
-}
-
-function getQueryParam(name) {
-  const url = new URL(window.location.href);
-  return url.searchParams.get(name);
-}
-
-async function fetchOrderById(orderId) {
-  const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}`);
-  if (!res.ok) throw new Error("Order not found");
-  return res.json();
-}
-
-// customer mark as collected
-async function markOrderCollected(orderId) {
-  const last = loadLastOrder();
-  if (!last?.order_no || !last?.customer_phone) {
-    throw new Error("Missing verification info (order_no / customer_phone). Please place an order again.");
-  }
-
-  const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}/collected`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      order_no: last.order_no,
-      customer_phone: last.customer_phone,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || err.message || "Failed to mark collected");
-  }
-  return true;
-}
-
-function setStatusBadge(statusRaw) {
-  const el = document.getElementById("my-order-status");
-  if (!el) return;
-
-  const status = String(statusRaw || "pending").toLowerCase();
-  el.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold";
-
-  if (status === "ready") {
-    el.classList.add("bg-green-100", "text-green-800");
-    el.innerHTML = `Ready to collect <span class="inline-block">✅</span>`;
-  } else if (status === "collected") {
-    el.classList.add("bg-neutral-900", "text-white");
-    el.textContent = "Collected ✅";
-  } else {
-    el.classList.add("bg-amber-100", "text-amber-800");
-    el.textContent = "Preparing";
-  }
-}
-
-// RENDER MY ORDER UI
-function renderMyOrderUI(order) {
-  const empty = document.getElementById("my-order-empty");
-  const card = document.getElementById("my-order-card");
-
-  const collectedBtn = document.getElementById("my-order-collected-btn");
-  const collectedHint = document.getElementById("my-order-collected-hint");
-
-  if (!order) {
-    empty?.classList.remove("hidden");
-    card?.classList.add("hidden");
-    return;
-  }
-
-  empty?.classList.add("hidden");
-  card?.classList.remove("hidden");
-
-  document.getElementById("my-order-no").textContent = order.order_no || `#${order.id}`;
-  document.getElementById("my-order-total").textContent = money(order.total_amount || 0);
-
-  setStatusBadge(order.status);
-
-  const upd = document.getElementById("my-order-updated");
-  if (upd) {
-    const t = order.updated_at || order.created_at || null;
-    upd.textContent = t ? `Last updated: ${new Date(t).toLocaleString()}` : "";
-  }
-
-  // ITEMS
-  const itemsRoot = document.getElementById("my-order-items");
-  itemsRoot.innerHTML = "";
-
-  const items = Array.isArray(order.items) ? order.items : [];
-  items.forEach((it) => {
-    const row = document.createElement("div");
-    row.className =
-      "flex items-center justify-between border-b border-neutral-100 pb-3 last:border-b-0 last:pb-0";
-
-    const name = it.name_en || it.name || `Item #${it.menu_item_id}`;
-    const qty = it.quantity || 1;
-    const unit = it.unit_price != null ? Number(it.unit_price) : null;
-
-    row.innerHTML = `
-      <div>
-        <div class="font-medium">${name}</div>
-        ${unit != null ? `<div class="text-xs text-neutral-500">${money(unit)} each</div>` : ""}
-      </div>
-      <div class="font-semibold">x${qty}</div>
-    `;
-    itemsRoot.appendChild(row);
-  });
-
-  // COLLECTED BUTTON LOGIC
-  collectedBtn?.classList.add("hidden");
-  collectedHint?.classList.add("hidden");
-
-  const status = String(order.status || "").toLowerCase();
-
-  if (status === "ready") {
-    collectedBtn.classList.remove("hidden");
-    collectedBtn.disabled = false;
-    collectedBtn.textContent = "I have collected my order";
-
-    collectedBtn.onclick = async () => {
+    function saveLastOrder(o) {
+      localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(o));
+    }
+    function loadLastOrder() {
       try {
-        collectedBtn.disabled = true;
-        collectedBtn.textContent = "Updating…";
-        await markOrderCollected(order.id);
+        return JSON.parse(localStorage.getItem(LAST_ORDER_KEY)) || null;
+      } catch {
+        return null;
+      }
+    }
 
-        window.location.href = `${window.location.origin}/receipt.html?order_id=${encodeURIComponent(order.id)}`;
-      } catch (e) {
-        alert(e.message || "Failed to update");
+    function showMyOrderTab() {
+      document.getElementById("my-order")?.classList.remove("hidden");
+      document.getElementById("my-order-link")?.classList.remove("hidden");
+      document.getElementById("my-order-link-mobile")?.classList.remove("hidden");
+      document.getElementById("my-order-footer")?.classList.remove("hidden");
+      document.getElementById("my-order-btn-mobile")?.classList.remove("hidden");
+    }
+    function hideMyOrderTab() {
+      document.getElementById("my-order")?.classList.add("hidden");
+      document.getElementById("my-order-link")?.classList.add("hidden");
+      document.getElementById("my-order-link-mobile")?.classList.add("hidden");
+      document.getElementById("my-order-footer")?.classList.add("hidden");
+      document.getElementById("my-order-btn-mobile")?.classList.add("hidden");
+    }
+
+    async function fetchOrderById(orderId) {
+      const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}`);
+      if (!res.ok) throw new Error("Order not found");
+      return res.json();
+    }
+
+    // customer mark as collected (with verification)
+    async function markOrderCollected(orderId) {
+      const last = loadLastOrder();
+      if (!last?.order_no || !last?.customer_phone) {
+        throw new Error(
+          "Missing verification info (order_no / customer_phone). Please place an order again."
+        );
+      }
+
+      const res = await fetch(
+        `${API_BASE}/orders/${encodeURIComponent(orderId)}/collected`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_no: last.order_no,
+            customer_phone: last.customer_phone,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.message || "Failed to mark collected");
+      }
+      return true;
+    }
+
+    function setStatusBadge(statusRaw) {
+      const el = document.getElementById("my-order-status");
+      if (!el) return;
+
+      const status = String(statusRaw || "pending").toLowerCase();
+      el.className =
+        "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold";
+
+      if (status === "ready") {
+        el.classList.add("bg-green-100", "text-green-800");
+        el.innerHTML = `Ready to collect <span class="inline-block">✅</span>`;
+      } else if (status === "collected") {
+        el.classList.add("bg-neutral-900", "text-white");
+        el.textContent = "Collected ✅";
+      } else {
+        el.classList.add("bg-amber-100", "text-amber-800");
+        el.textContent = "Preparing";
+      }
+    }
+
+    function stopOrderPolling() {
+      if (orderPollTimer) clearInterval(orderPollTimer);
+      orderPollTimer = null;
+    }
+
+    function startOrderPolling(orderId) {
+      stopOrderPolling();
+      orderPollTimer = setInterval(async () => {
+        if (document.hidden) return;
+
+        try {
+          const o = await fetchOrderById(orderId);
+          renderMyOrderUI(o);
+
+          if (["ready", "collected"].includes(String(o.status || "").toLowerCase())) {
+            stopOrderPolling();
+          }
+        } catch {
+          stopOrderPolling();
+        }
+      }, ORDER_POLL_MS);
+    }
+
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+
+    // RENDER MY ORDER UI
+    function renderMyOrderUI(order) {
+      const empty = document.getElementById("my-order-empty");
+      const card = document.getElementById("my-order-card");
+
+      const collectedBtn = document.getElementById("my-order-collected-btn");
+      const collectedHint = document.getElementById("my-order-collected-hint");
+
+      if (!order) {
+        empty?.classList.remove("hidden");
+        card?.classList.add("hidden");
+        return;
+      }
+
+      empty?.classList.add("hidden");
+      card?.classList.remove("hidden");
+
+      document.getElementById("my-order-no").textContent = order.order_no || `#${order.id}`;
+      document.getElementById("my-order-total").textContent = money(order.total_amount || 0);
+
+      setStatusBadge(order.status);
+
+      const upd = document.getElementById("my-order-updated");
+      if (upd) {
+        const t = order.updated_at || order.created_at || null;
+        upd.textContent = t ? `Last updated: ${new Date(t).toLocaleString()}` : "";
+      }
+
+      // ITEMS
+      const itemsRoot = document.getElementById("my-order-items");
+      itemsRoot.innerHTML = "";
+
+      const items = Array.isArray(order.items) ? order.items : [];
+      items.forEach((it) => {
+        const row = document.createElement("div");
+        row.className =
+          "flex items-center justify-between border-b border-neutral-100 pb-3 last:border-b-0 last:pb-0";
+
+        const name = it.name_en || it.name || `Item #${it.menu_item_id}`;
+        const qty = it.quantity || 1;
+        const unit = it.unit_price != null ? Number(it.unit_price) : null;
+
+        row.innerHTML = `
+          <div>
+            <div class="font-medium">${name}</div>
+            ${unit != null ? `<div class="text-xs text-neutral-500">${money(unit)} each</div>` : ""}
+          </div>
+          <div class="font-semibold">x${qty}</div>
+        `;
+        itemsRoot.appendChild(row);
+      });
+
+      // COLLECTED BUTTON LOGIC
+      collectedBtn?.classList.add("hidden");
+      collectedHint?.classList.add("hidden");
+
+      const status = String(order.status || "").toLowerCase();
+
+      if (status === "ready") {
+        collectedBtn.classList.remove("hidden");
         collectedBtn.disabled = false;
         collectedBtn.textContent = "I have collected my order";
+
+        collectedBtn.onclick = async () => {
+          try {
+            collectedBtn.disabled = true;
+            collectedBtn.textContent = "Updating…";
+
+            await markOrderCollected(order.id);
+
+            window.location.href = `${window.location.origin}/receipt.html?order_id=${encodeURIComponent(
+              order.id
+            )}`;
+          } catch (e) {
+            alert(e.message || "Failed to update");
+            collectedBtn.disabled = false;
+            collectedBtn.textContent = "I have collected my order";
+          }
+        };
       }
-    };
-  }
 
-  if (status === "collected") {
-    collectedHint.classList.remove("hidden");
-    stopOrderStream();
-  }
-}
-
-function stopOrderStream() {
-  if (orderStream) {
-    orderStream.close();
-    orderStream = null;
-  }
-  if (streamRetryTimer) {
-    clearTimeout(streamRetryTimer);
-    streamRetryTimer = null;
-  }
-}
-
-function startOrderStream(orderId) {
-  stopOrderStream();
-  activeOrderId = orderId;
-
-  // IMPORTANT: this endpoint must exist on backend
-  const url = `${API_BASE}/orders/${encodeURIComponent(orderId)}/stream`;
-  orderStream = new EventSource(url);
-
-  orderStream.addEventListener("message", (evt) => {
-    try {
-      const data = JSON.parse(evt.data);
-      // Expecting updated order JSON
-      renderMyOrderUI(data);
-
-      const s = String(data.status || "").toLowerCase();
-      if (s === "collected") stopOrderStream();
-    } catch (e) {
-      console.warn("Bad SSE message:", evt.data);
+      if (status === "collected") {
+        collectedHint.classList.remove("hidden");
+        stopOrderPolling();
+      }
     }
-  });
 
-  orderStream.addEventListener("error", () => {
-    // No polling. Just retry reconnect after a short delay.
-    // This does NOT refresh UI; it only reconnects the stream.
-    stopOrderStream();
-    streamRetryTimer = setTimeout(() => {
-      if (activeOrderId) startOrderStream(activeOrderId);
-    }, 1500);
-  });
-}
+    async function loadMyOrderFromDevice() {
+      const qid = getQueryParam("order_id");
+      const last = loadLastOrder();
+      const orderId = qid || last?.order_id;
 
-async function loadMyOrderFromDevice() {
-  const qid = getQueryParam("order_id");
-  const last = loadLastOrder();
-  const orderId = qid || last?.order_id;
+      if (!orderId) {
+        hideMyOrderTab();
+        renderMyOrderUI(null);
+        stopOrderPolling();
+        return;
+      }
 
-  if (!orderId) {
-    hideMyOrderTab();
-    renderMyOrderUI(null);
-    stopOrderStream();
-    return;
-  }
+      showMyOrderTab();
 
-  showMyOrderTab();
+      try {
+        const o = await fetchOrderById(orderId);
 
-  try {
-    // Initial fetch ONCE (not polling)
-    const o = await fetchOrderById(orderId);
+        saveLastOrder({
+          order_id: o.id,
+          order_no: o.order_no,
+          customer_phone: last?.customer_phone || o.customer_phone || null,
+        });
 
-    saveLastOrder({
-      order_id: o.id,
-      order_no: o.order_no,
-      customer_phone: last?.customer_phone || o.customer_phone || null,
+        renderMyOrderUI(o);
+
+        const s = String(o.status || "").toLowerCase();
+        if (!["ready", "collected"].includes(s)) startOrderPolling(o.id);
+        else stopOrderPolling();
+      } catch {
+        hideMyOrderTab();
+        renderMyOrderUI(null);
+        stopOrderPolling();
+      }
+    }
+
+    // Pause polling when tab hidden; resume refresh when visible
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stopOrderPolling();
+      else loadMyOrderFromDevice();
     });
-
-    renderMyOrderUI(o);
-
-    const s = String(o.status || "").toLowerCase();
-    if (s !== "collected") startOrderStream(o.id);
-    else stopOrderStream();
-  } catch {
-    hideMyOrderTab();
-    renderMyOrderUI(null);
-    stopOrderStream();
-  }
-}
 
     // CART LOGIC
     function addToCart(item) {
@@ -979,8 +985,8 @@ async function loadMyOrderFromDevice() {
 
       saveCart();
       renderCart();
-      updateCartCount(); 
-      openCart();        
+      updateCartCount();   // ✅ also updates floating cart
+      openCart();          // optional: comment if you don't want auto open
     }
 
     function updateQty(id, delta) {
@@ -992,7 +998,7 @@ async function loadMyOrderFromDevice() {
 
       saveCart();
       renderCart();
-      updateCartCount(); // 
+      updateCartCount(); // ✅ also updates floating cart
     }
 
     function cartTotal() {
@@ -1143,7 +1149,8 @@ async function loadMyOrderFromDevice() {
       document.body.classList.remove("overflow-hidden");
     }
 
-    // SIMPLE PAYMENT MODAL (IN-PAGE, NO BACKEND)
+    // ✅ SIMPLE PAYMENT MODAL (IN-PAGE, NO BACKEND)
+    // --------------------
     let pendingOrderId = null;
     let pendingOrderNo = null;
     let pendingAmount = 0;
@@ -1266,7 +1273,7 @@ async function loadMyOrderFromDevice() {
         }
 
         resetPayForm();
-        // success → go to My Order
+        // ✅ success → go to My Order
         closePayModal();
         showMyOrderTab();
         window.location.hash = "my-order";
@@ -1422,11 +1429,12 @@ async function loadMyOrderFromDevice() {
       cart = [];
       saveCart();
       renderCart();
-      updateCartCount();      
+      updateCartCount();       // ✅ hides floating cart because cart is empty now
       form.reset();
       closeCart();
 
-      // show gateway first, openGateway
+      // show gateway first (✅ show order_no, not order_id)
+      // openGateway(data.order_no, amount, data.order_id);
       openPayModal(data.order_no, amount, data.order_id);
       return;
     }
@@ -1605,7 +1613,9 @@ async function loadMyOrderFromDevice() {
       });
     }
 
+    // --------------------
     // MENU IMAGE LIGHTBOX
+    // --------------------
     function openLightbox(src, caption = "") {
       const modal = document.getElementById("img-lightbox");
       const img = document.getElementById("img-lightbox-img");
@@ -1675,6 +1685,7 @@ async function loadMyOrderFromDevice() {
 
       loadMyOrderFromDevice();
 
+      // ✅ Add this:
       loadInstagramFeed();
     }
 
@@ -1732,7 +1743,9 @@ async function loadMyOrderFromDevice() {
       go(0);
     })();
 
-    // INSTAGRAM FEED
+    // --------------------
+    // INSTAGRAM FEED (dynamic)
+    // --------------------
     async function loadInstagramFeed() {
       const grid = document.getElementById("ig-grid");
       const errBox = document.getElementById("ig-error");
