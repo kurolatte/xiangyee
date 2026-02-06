@@ -18,7 +18,6 @@
       theme: {
         extend: {
           fontFamily: {
-            // ✅ Use dynasty fonts as your default
             sans: ['"Noto Serif SC"', '"ZCOOL XiaoWei"', 'serif'],
             dynasty: ['"ZCOOL XiaoWei"', '"Noto Serif SC"', 'serif'],
           },
@@ -38,13 +37,11 @@
     .zoomable { cursor: zoom-in;transition: transform 220ms ease, box-shadow 220ms ease;will-change: transform; }
     @media (hover: hover) and (pointer: fine) { .zoomable:hover { transform: scale(1.06); }
   }
-  /* ✅ Dynasty headings */
   h1, h2, h3, .dynasty-title {
     font-family: "ZCOOL XiaoWei", "Noto Serif SC", serif !important;
     letter-spacing: 0.03em;
   }
 
-  /* ✅ Body text: elegant serif but readable */
   body {
     font-family: "Noto Serif SC", ui-sans-serif, system-ui, serif !important;
   }
@@ -73,7 +70,6 @@
 
       <!-- Nav (desktop) -->
       <nav class="hidden md:flex items-center gap-6 text-sm">
-        <a id="my-order-link" href="#my-order" class="hidden hover:text-brand-red">My Order</a>
         <a href="#about" class="hover:text-brand-red">About</a>
         <a href="#menu" class="hover:text-brand-red">Menu</a>
         <a href="#gallery" class="hover:text-brand-red">Gallery</a>
@@ -83,12 +79,6 @@
 
       <!-- Actions (desktop) + mobile menu -->
       <div class="flex items-center gap-2">
-        <!-- Desktop My Order -->
-        <a id="my-order-btn"
-           href="#my-order"
-           class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
-          My Order
-        </a>
 
         <!-- Desktop Cart -->
         <button id="cart-btn"
@@ -132,7 +122,6 @@
   <!-- Mobile Nav -->
   <div id="mobile-nav" class="md:hidden hidden border-t border-neutral-200 bg-white">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 text-sm">
-      <a id="my-order-link-mobile" href="#my-order" class="hidden py-2 hover:text-brand-red">My Order</a>
       <a href="#about" class="py-2 hover:text-brand-red">About</a>
       <a href="#menu" class="py-2 hover:text-brand-red">Menu</a>
       <a href="#gallery" class="py-2 hover:text-brand-red">Gallery</a>
@@ -498,7 +487,7 @@
     </div>
   </footer>
 
-  <!-- Cart Drawer (KEEP ONLY THIS ONE) -->
+  <!-- Cart Drawer -->
   <aside id="cart-drawer"
     class="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white border-l border-neutral-200 shadow-2xl translate-x-full transition-transform duration-300 z-[100] flex flex-col">
 
@@ -563,7 +552,7 @@
 
   <div id="drawer-backdrop" class="fixed inset-0 bg-black/40 z-[55] hidden"></div>
 
-  <!-- ✅ Floating Cart Button (appears only when cart has items) -->
+  <!-- Floating Cart Button (appears only when cart has items) -->
   <button id="floating-cart"
     class="hidden fixed bottom-5 right-5 z-[70] rounded-full bg-brand-red text-white shadow-soft border border-red-700/20
            px-4 py-3 flex items-center gap-2 hover:bg-red-700 active:scale-95 transition">
@@ -574,53 +563,6 @@
       0
     </span>
   </button>
-
-  <!-- Mock Gateway Modal -->
-  <!-- <div id="gateway-modal" class="fixed inset-0 z-[80] hidden">
-    <div id="gateway-backdrop" class="absolute inset-0 bg-black/50"></div>
-
-    <div class="relative mx-auto mt-24 w-[92%] max-w-md rounded-2xl bg-white shadow-2xl border border-neutral-200 overflow-hidden">
-      <div class="p-4 border-b border-neutral-200 flex items-center justify-between">
-        <div class="font-bold">Mock Payment Gateway</div>
-        <button id="gateway-close" class="p-2 rounded-lg hover:bg-neutral-100">✕</button>
-      </div>
-
-      <div class="p-5 space-y-4">
-        <div class="rounded-xl bg-neutral-50 border border-neutral-200 p-4">
-          <div class="text-sm text-neutral-500">Order Number</div>
-          <div id="gw-order-id" class="font-mono font-semibold break-all">—</div>
-
-          <div class="mt-3 text-sm text-neutral-500">Amount</div>
-          <div id="gw-amount" class="text-2xl font-black">$0.00</div>
-        </div>
-
-        <div class="space-y-2 text-sm text-neutral-600">
-          <div class="flex items-center justify-between">
-            <span>Payment method</span>
-            <span class="font-semibold">Card (Demo)</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span>Status</span>
-            <span id="gw-status" class="font-semibold text-amber-700">Awaiting payment</span>
-          </div>
-        </div>
-
-        <button id="gw-pay"
-          class="w-full px-4 py-3 rounded-xl bg-brand-red text-white font-semibold hover:bg-red-700">
-          Pay Now
-        </button>
-
-        <button id="gw-cancel"
-          class="w-full px-4 py-3 rounded-xl bg-white border border-neutral-300 font-semibold hover:border-brand-red hover:text-brand-red">
-          Cancel
-        </button>
-
-        <p class="text-xs text-neutral-500">
-          Demo only. No real payment is processed.
-        </p>
-      </div>
-    </div>
-  </div> -->
 
     <!-- Simple Payment Modal (Mock) -->
   <div id="pay-modal" class="fixed inset-0 z-[90] hidden">
@@ -735,7 +677,7 @@
     let menuItems = [];
     let cart = [];
 
-    // CART STORAGE (HARDENED: ensure numeric ids/qty/price)
+    // CART STORAGE (ensure numeric ids/qty/price)
     function saveCart() {
       localStorage.setItem("xiangyee_cart", JSON.stringify(cart));
     }
@@ -762,7 +704,7 @@
       }
     }
 
-    // ✅ FLOATING CART BUTTON
+    // FLOATING CART BUTTON
     function updateFloatingCart() {
       const btn = document.getElementById("floating-cart");
       const badge = document.getElementById("floating-cart-count");
@@ -776,247 +718,247 @@
     }
 
     // MY ORDER
-    const LAST_ORDER_KEY = "xiangyee_last_order";
-    let orderPollTimer = null;
-    const ORDER_POLL_MS = 4000;
+   // MY ORDER (REAL-TIME via SSE, NO POLLING)
+const LAST_ORDER_KEY = "xiangyee_last_order";
+let orderStream = null;            // EventSource instance
+let activeOrderId = null;
+let streamRetryTimer = null;
 
-    function saveLastOrder(o) {
-      localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(o));
-    }
-    function loadLastOrder() {
+function saveLastOrder(o) {
+  localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(o));
+}
+function loadLastOrder() {
+  try {
+    return JSON.parse(localStorage.getItem(LAST_ORDER_KEY)) || null;
+  } catch {
+    return null;
+  }
+}
+
+function showMyOrderTab() {
+  document.getElementById("my-order")?.classList.remove("hidden");
+  document.getElementById("my-order-footer")?.classList.remove("hidden");
+  document.getElementById("my-order-btn-mobile")?.classList.remove("hidden");
+}
+function hideMyOrderTab() {
+  document.getElementById("my-order")?.classList.add("hidden");
+  document.getElementById("my-order-footer")?.classList.add("hidden");
+  document.getElementById("my-order-btn-mobile")?.classList.add("hidden");
+}
+
+function getQueryParam(name) {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(name);
+}
+
+async function fetchOrderById(orderId) {
+  const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}`);
+  if (!res.ok) throw new Error("Order not found");
+  return res.json();
+}
+
+// customer mark as collected
+async function markOrderCollected(orderId) {
+  const last = loadLastOrder();
+  if (!last?.order_no || !last?.customer_phone) {
+    throw new Error("Missing verification info (order_no / customer_phone). Please place an order again.");
+  }
+
+  const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}/collected`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      order_no: last.order_no,
+      customer_phone: last.customer_phone,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || err.message || "Failed to mark collected");
+  }
+  return true;
+}
+
+function setStatusBadge(statusRaw) {
+  const el = document.getElementById("my-order-status");
+  if (!el) return;
+
+  const status = String(statusRaw || "pending").toLowerCase();
+  el.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold";
+
+  if (status === "ready") {
+    el.classList.add("bg-green-100", "text-green-800");
+    el.innerHTML = `Ready to collect <span class="inline-block">✅</span>`;
+  } else if (status === "collected") {
+    el.classList.add("bg-neutral-900", "text-white");
+    el.textContent = "Collected ✅";
+  } else {
+    el.classList.add("bg-amber-100", "text-amber-800");
+    el.textContent = "Preparing";
+  }
+}
+
+// RENDER MY ORDER UI
+function renderMyOrderUI(order) {
+  const empty = document.getElementById("my-order-empty");
+  const card = document.getElementById("my-order-card");
+
+  const collectedBtn = document.getElementById("my-order-collected-btn");
+  const collectedHint = document.getElementById("my-order-collected-hint");
+
+  if (!order) {
+    empty?.classList.remove("hidden");
+    card?.classList.add("hidden");
+    return;
+  }
+
+  empty?.classList.add("hidden");
+  card?.classList.remove("hidden");
+
+  document.getElementById("my-order-no").textContent = order.order_no || `#${order.id}`;
+  document.getElementById("my-order-total").textContent = money(order.total_amount || 0);
+
+  setStatusBadge(order.status);
+
+  const upd = document.getElementById("my-order-updated");
+  if (upd) {
+    const t = order.updated_at || order.created_at || null;
+    upd.textContent = t ? `Last updated: ${new Date(t).toLocaleString()}` : "";
+  }
+
+  // ITEMS
+  const itemsRoot = document.getElementById("my-order-items");
+  itemsRoot.innerHTML = "";
+
+  const items = Array.isArray(order.items) ? order.items : [];
+  items.forEach((it) => {
+    const row = document.createElement("div");
+    row.className =
+      "flex items-center justify-between border-b border-neutral-100 pb-3 last:border-b-0 last:pb-0";
+
+    const name = it.name_en || it.name || `Item #${it.menu_item_id}`;
+    const qty = it.quantity || 1;
+    const unit = it.unit_price != null ? Number(it.unit_price) : null;
+
+    row.innerHTML = `
+      <div>
+        <div class="font-medium">${name}</div>
+        ${unit != null ? `<div class="text-xs text-neutral-500">${money(unit)} each</div>` : ""}
+      </div>
+      <div class="font-semibold">x${qty}</div>
+    `;
+    itemsRoot.appendChild(row);
+  });
+
+  // COLLECTED BUTTON LOGIC
+  collectedBtn?.classList.add("hidden");
+  collectedHint?.classList.add("hidden");
+
+  const status = String(order.status || "").toLowerCase();
+
+  if (status === "ready") {
+    collectedBtn.classList.remove("hidden");
+    collectedBtn.disabled = false;
+    collectedBtn.textContent = "I have collected my order";
+
+    collectedBtn.onclick = async () => {
       try {
-        return JSON.parse(localStorage.getItem(LAST_ORDER_KEY)) || null;
-      } catch {
-        return null;
-      }
-    }
+        collectedBtn.disabled = true;
+        collectedBtn.textContent = "Updating…";
+        await markOrderCollected(order.id);
 
-    function showMyOrderTab() {
-      document.getElementById("my-order")?.classList.remove("hidden");
-      document.getElementById("my-order-link")?.classList.remove("hidden");
-      document.getElementById("my-order-link-mobile")?.classList.remove("hidden");
-      document.getElementById("my-order-btn")?.classList.remove("hidden");
-      document.getElementById("my-order-footer")?.classList.remove("hidden");
-      document.getElementById("my-order-btn-mobile")?.classList.remove("hidden");
-    }
-    function hideMyOrderTab() {
-      document.getElementById("my-order")?.classList.add("hidden");
-      document.getElementById("my-order-link")?.classList.add("hidden");
-      document.getElementById("my-order-link-mobile")?.classList.add("hidden");
-      document.getElementById("my-order-btn")?.classList.add("hidden");
-      document.getElementById("my-order-footer")?.classList.add("hidden");
-      document.getElementById("my-order-btn-mobile")?.classList.add("hidden");
-    }
-
-    async function fetchOrderById(orderId) {
-      const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}`);
-      if (!res.ok) throw new Error("Order not found");
-      return res.json();
-    }
-
-    // customer mark as collected (with verification)
-    async function markOrderCollected(orderId) {
-      const last = loadLastOrder();
-      if (!last?.order_no || !last?.customer_phone) {
-        throw new Error(
-          "Missing verification info (order_no / customer_phone). Please place an order again."
-        );
-      }
-
-      const res = await fetch(
-        `${API_BASE}/orders/${encodeURIComponent(orderId)}/collected`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            order_no: last.order_no,
-            customer_phone: last.customer_phone,
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || err.message || "Failed to mark collected");
-      }
-      return true;
-    }
-
-    function setStatusBadge(statusRaw) {
-      const el = document.getElementById("my-order-status");
-      if (!el) return;
-
-      const status = String(statusRaw || "pending").toLowerCase();
-      el.className =
-        "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold";
-
-      if (status === "ready") {
-        el.classList.add("bg-green-100", "text-green-800");
-        el.innerHTML = `Ready to collect <span class="inline-block">✅</span>`;
-      } else if (status === "collected") {
-        el.classList.add("bg-neutral-900", "text-white");
-        el.textContent = "Collected ✅";
-      } else {
-        el.classList.add("bg-amber-100", "text-amber-800");
-        el.textContent = "Preparing";
-      }
-    }
-
-    function stopOrderPolling() {
-      if (orderPollTimer) clearInterval(orderPollTimer);
-      orderPollTimer = null;
-    }
-
-    function startOrderPolling(orderId) {
-      stopOrderPolling();
-      orderPollTimer = setInterval(async () => {
-        if (document.hidden) return;
-
-        try {
-          const o = await fetchOrderById(orderId);
-          renderMyOrderUI(o);
-
-          if (["ready", "collected"].includes(String(o.status || "").toLowerCase())) {
-            stopOrderPolling();
-          }
-        } catch {
-          stopOrderPolling();
-        }
-      }, ORDER_POLL_MS);
-    }
-
-    function getQueryParam(name) {
-      const url = new URL(window.location.href);
-      return url.searchParams.get(name);
-    }
-
-    // RENDER MY ORDER UI
-    function renderMyOrderUI(order) {
-      const empty = document.getElementById("my-order-empty");
-      const card = document.getElementById("my-order-card");
-
-      const collectedBtn = document.getElementById("my-order-collected-btn");
-      const collectedHint = document.getElementById("my-order-collected-hint");
-
-      if (!order) {
-        empty?.classList.remove("hidden");
-        card?.classList.add("hidden");
-        return;
-      }
-
-      empty?.classList.add("hidden");
-      card?.classList.remove("hidden");
-
-      document.getElementById("my-order-no").textContent = order.order_no || `#${order.id}`;
-      document.getElementById("my-order-total").textContent = money(order.total_amount || 0);
-
-      setStatusBadge(order.status);
-
-      const upd = document.getElementById("my-order-updated");
-      if (upd) {
-        const t = order.updated_at || order.created_at || null;
-        upd.textContent = t ? `Last updated: ${new Date(t).toLocaleString()}` : "";
-      }
-
-      // ITEMS
-      const itemsRoot = document.getElementById("my-order-items");
-      itemsRoot.innerHTML = "";
-
-      const items = Array.isArray(order.items) ? order.items : [];
-      items.forEach((it) => {
-        const row = document.createElement("div");
-        row.className =
-          "flex items-center justify-between border-b border-neutral-100 pb-3 last:border-b-0 last:pb-0";
-
-        const name = it.name_en || it.name || `Item #${it.menu_item_id}`;
-        const qty = it.quantity || 1;
-        const unit = it.unit_price != null ? Number(it.unit_price) : null;
-
-        row.innerHTML = `
-          <div>
-            <div class="font-medium">${name}</div>
-            ${unit != null ? `<div class="text-xs text-neutral-500">${money(unit)} each</div>` : ""}
-          </div>
-          <div class="font-semibold">x${qty}</div>
-        `;
-        itemsRoot.appendChild(row);
-      });
-
-      // COLLECTED BUTTON LOGIC
-      collectedBtn?.classList.add("hidden");
-      collectedHint?.classList.add("hidden");
-
-      const status = String(order.status || "").toLowerCase();
-
-      if (status === "ready") {
-        collectedBtn.classList.remove("hidden");
+        window.location.href = `${window.location.origin}/receipt.html?order_id=${encodeURIComponent(order.id)}`;
+      } catch (e) {
+        alert(e.message || "Failed to update");
         collectedBtn.disabled = false;
         collectedBtn.textContent = "I have collected my order";
-
-        collectedBtn.onclick = async () => {
-          try {
-            collectedBtn.disabled = true;
-            collectedBtn.textContent = "Updating…";
-
-            await markOrderCollected(order.id);
-
-            window.location.href = `${window.location.origin}/receipt.html?order_id=${encodeURIComponent(
-              order.id
-            )}`;
-          } catch (e) {
-            alert(e.message || "Failed to update");
-            collectedBtn.disabled = false;
-            collectedBtn.textContent = "I have collected my order";
-          }
-        };
       }
+    };
+  }
 
-      if (status === "collected") {
-        collectedHint.classList.remove("hidden");
-        stopOrderPolling();
-      }
+  if (status === "collected") {
+    collectedHint.classList.remove("hidden");
+    stopOrderStream();
+  }
+}
+
+function stopOrderStream() {
+  if (orderStream) {
+    orderStream.close();
+    orderStream = null;
+  }
+  if (streamRetryTimer) {
+    clearTimeout(streamRetryTimer);
+    streamRetryTimer = null;
+  }
+}
+
+function startOrderStream(orderId) {
+  stopOrderStream();
+  activeOrderId = orderId;
+
+  // IMPORTANT: this endpoint must exist on backend
+  const url = `${API_BASE}/orders/${encodeURIComponent(orderId)}/stream`;
+  orderStream = new EventSource(url);
+
+  orderStream.addEventListener("message", (evt) => {
+    try {
+      const data = JSON.parse(evt.data);
+      // Expecting updated order JSON
+      renderMyOrderUI(data);
+
+      const s = String(data.status || "").toLowerCase();
+      if (s === "collected") stopOrderStream();
+    } catch (e) {
+      console.warn("Bad SSE message:", evt.data);
     }
+  });
 
-    async function loadMyOrderFromDevice() {
-      const qid = getQueryParam("order_id");
-      const last = loadLastOrder();
-      const orderId = qid || last?.order_id;
+  orderStream.addEventListener("error", () => {
+    // No polling. Just retry reconnect after a short delay.
+    // This does NOT refresh UI; it only reconnects the stream.
+    stopOrderStream();
+    streamRetryTimer = setTimeout(() => {
+      if (activeOrderId) startOrderStream(activeOrderId);
+    }, 1500);
+  });
+}
 
-      if (!orderId) {
-        hideMyOrderTab();
-        renderMyOrderUI(null);
-        stopOrderPolling();
-        return;
-      }
+async function loadMyOrderFromDevice() {
+  const qid = getQueryParam("order_id");
+  const last = loadLastOrder();
+  const orderId = qid || last?.order_id;
 
-      showMyOrderTab();
+  if (!orderId) {
+    hideMyOrderTab();
+    renderMyOrderUI(null);
+    stopOrderStream();
+    return;
+  }
 
-      try {
-        const o = await fetchOrderById(orderId);
+  showMyOrderTab();
 
-        saveLastOrder({
-          order_id: o.id,
-          order_no: o.order_no,
-          customer_phone: last?.customer_phone || o.customer_phone || null,
-        });
+  try {
+    // Initial fetch ONCE (not polling)
+    const o = await fetchOrderById(orderId);
 
-        renderMyOrderUI(o);
-
-        const s = String(o.status || "").toLowerCase();
-        if (!["ready", "collected"].includes(s)) startOrderPolling(o.id);
-        else stopOrderPolling();
-      } catch {
-        hideMyOrderTab();
-        renderMyOrderUI(null);
-        stopOrderPolling();
-      }
-    }
-
-    // Pause polling when tab hidden; resume refresh when visible
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) stopOrderPolling();
-      else loadMyOrderFromDevice();
+    saveLastOrder({
+      order_id: o.id,
+      order_no: o.order_no,
+      customer_phone: last?.customer_phone || o.customer_phone || null,
     });
+
+    renderMyOrderUI(o);
+
+    const s = String(o.status || "").toLowerCase();
+    if (s !== "collected") startOrderStream(o.id);
+    else stopOrderStream();
+  } catch {
+    hideMyOrderTab();
+    renderMyOrderUI(null);
+    stopOrderStream();
+  }
 
     // CART LOGIC
     function addToCart(item) {
@@ -1036,8 +978,8 @@
 
       saveCart();
       renderCart();
-      updateCartCount();   // ✅ also updates floating cart
-      openCart();          // optional: comment if you don't want auto open
+      updateCartCount(); 
+      openCart();        
     }
 
     function updateQty(id, delta) {
@@ -1049,7 +991,7 @@
 
       saveCart();
       renderCart();
-      updateCartCount(); // ✅ also updates floating cart
+      updateCartCount(); // 
     }
 
     function cartTotal() {
@@ -1200,60 +1142,7 @@
       document.body.classList.remove("overflow-hidden");
     }
 
-    // // --------------------
-    // // MOCK GATEWAY (IN-PAGE)
-    // // --------------------
-    // let pendingOrderId = null;   // keep for backend tracking/receipt
-    // let pendingAmount = 0;
-
-    // // ✅ show SAME order number as "Order status & collection"
-    // function openGateway(orderNo, amount, orderId) {
-    //   pendingOrderId = orderId;
-    //   pendingAmount = Number(amount || 0);
-
-    //   document.getElementById("gw-order-id").textContent = String(orderNo || "—");
-    //   document.getElementById("gw-amount").textContent = money(pendingAmount);
-
-    //   const statusEl = document.getElementById("gw-status");
-    //   statusEl.textContent = "Awaiting payment";
-    //   statusEl.className = "font-semibold text-amber-700";
-
-    //   document.getElementById("gateway-modal").classList.remove("hidden");
-    //   document.body.classList.add("overflow-hidden");
-    // }
-
-    // function closeGateway() {
-    //   document.getElementById("gateway-modal").classList.add("hidden");
-    //   document.body.classList.remove("overflow-hidden");
-    // }
-
-    // async function submitMockPayment({ orderId, amountCents }) {
-    //   const cardNumber = document.getElementById("card-number").value;
-
-    //   const res = await fetch(`${API_BASE}/payments/charge`, {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({
-    //       order_id: orderId,
-    //       amount_cents: amountCents,
-    //       card_number: cardNumber,
-    //     }),
-    //   });
-
-    //   const data = await res.json();
-
-    //   if (!res.ok) throw new Error(data.error || "Payment failed");
-
-    //   if (data.payment.status !== "success") {
-    //     throw new Error("Card declined (mock)");
-    //   }
-
-    //   return data.payment;
-    // }
-
-    // --------------------
-    // ✅ SIMPLE PAYMENT MODAL (IN-PAGE, NO BACKEND)
-    // --------------------
+    // SIMPLE PAYMENT MODAL (IN-PAGE, NO BACKEND)
     let pendingOrderId = null;
     let pendingOrderNo = null;
     let pendingAmount = 0;
@@ -1376,7 +1265,7 @@
         }
 
         resetPayForm();
-        // ✅ success → go to My Order
+        // success → go to My Order
         closePayModal();
         showMyOrderTab();
         window.location.hash = "my-order";
@@ -1532,12 +1421,11 @@
       cart = [];
       saveCart();
       renderCart();
-      updateCartCount();       // ✅ hides floating cart because cart is empty now
+      updateCartCount();      
       form.reset();
       closeCart();
 
-      // show gateway first (✅ show order_no, not order_id)
-      // openGateway(data.order_no, amount, data.order_id);
+      // show gateway first, openGateway
       openPayModal(data.order_no, amount, data.order_id);
       return;
     }
@@ -1716,9 +1604,7 @@
       });
     }
 
-    // --------------------
     // MENU IMAGE LIGHTBOX
-    // --------------------
     function openLightbox(src, caption = "") {
       const modal = document.getElementById("img-lightbox");
       const img = document.getElementById("img-lightbox-img");
@@ -1788,7 +1674,6 @@
 
       loadMyOrderFromDevice();
 
-      // ✅ Add this:
       loadInstagramFeed();
     }
 
@@ -1846,9 +1731,7 @@
       go(0);
     })();
 
-    // --------------------
-    // INSTAGRAM FEED (dynamic)
-    // --------------------
+    // INSTAGRAM FEED
     async function loadInstagramFeed() {
       const grid = document.getElementById("ig-grid");
       const errBox = document.getElementById("ig-error");
