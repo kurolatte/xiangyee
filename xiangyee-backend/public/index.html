@@ -56,10 +56,12 @@
 
 <body class="bg-neutral-50 text-neutral-900 font-sans">
 
-  <!-- Header -->
-  <header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-neutral-200">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-neutral-200">
+  <div class="max-w-6xl mx-auto px-4 py-3">
 
+    <!-- ROW 1 -->
+    <div class="flex items-center justify-between">
       <!-- Logo -->
       <a href="#top" class="flex items-center">
         <img
@@ -69,7 +71,7 @@
         />
       </a>
 
-      <!-- Nav -->
+      <!-- Nav (desktop) -->
       <nav class="hidden md:flex items-center gap-6 text-sm">
         <a id="my-order-link" href="#my-order" class="hidden hover:text-brand-red">My Order</a>
         <a href="#about" class="hover:text-brand-red">About</a>
@@ -79,40 +81,67 @@
         <a href="#contact" class="hover:text-brand-red">Contact</a>
       </nav>
 
-      <!-- Actions -->
+      <!-- Actions (desktop) + mobile menu -->
       <div class="flex items-center gap-2">
+        <!-- Desktop My Order -->
         <a id="my-order-btn"
            href="#my-order"
            class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
           My Order
         </a>
 
-        <button id="cart-btn" class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
+        <!-- Desktop Cart -->
+        <button id="cart-btn"
+          class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
           Cart (<span id="cart-count">0</span>)
         </button>
 
-        <a href="#reserve" class="px-4 py-2 rounded-xl bg-brand-red text-white font-semibold shadow-soft hover:bg-red-700">
+        <!-- Desktop Book -->
+        <a href="#reserve"
+           class="hidden md:inline-flex px-4 py-2 rounded-xl bg-brand-red text-white font-semibold shadow-soft hover:bg-red-700">
           Book a Table
         </a>
 
+        <!-- Mobile ☰ -->
         <button id="mobile-btn" class="md:hidden p-2 rounded-lg border border-neutral-300">
           ☰
         </button>
       </div>
     </div>
 
-    <!-- Mobile Nav -->
-    <div id="mobile-nav" class="md:hidden hidden border-t border-neutral-200 bg-white">
-      <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 text-sm">
-        <a id="my-order-link-mobile" href="#my-order" class="hidden py-2 hover:text-brand-red">My Order</a>
-        <a href="#about" class="py-2 hover:text-brand-red">About</a>
-        <a href="#menu" class="py-2 hover:text-brand-red">Menu</a>
-        <a href="#gallery" class="py-2 hover:text-brand-red">Gallery</a>
-        <a href="#reserve" class="py-2 hover:text-brand-red">Reserve</a>
-        <a href="#contact" class="py-2 hover:text-brand-red">Contact</a>
-      </div>
+    <!-- ROW 2 (mobile buttons) -->
+    <div class="md:hidden mt-3 grid grid-cols-3 gap-2">
+      <a id="my-order-btn-mobile"
+         href="#my-order"
+         class="hidden px-3 py-2 rounded-xl border border-neutral-300 bg-white font-semibold text-center hover:border-brand-red hover:text-brand-red">
+        My Order
+      </a>
+
+      <button id="cart-btn-mobile"
+        class="px-3 py-2 rounded-xl border border-neutral-300 bg-white font-semibold text-center hover:border-brand-red hover:text-brand-red">
+        Cart (<span id="cart-count-mobile">0</span>)
+      </button>
+
+      <a href="#reserve"
+         class="px-3 py-2 rounded-xl bg-brand-red text-white font-semibold text-center shadow-soft hover:bg-red-700">
+        Book
+      </a>
     </div>
-  </header>
+  </div>
+
+  <!-- Mobile Nav -->
+  <div id="mobile-nav" class="md:hidden hidden border-t border-neutral-200 bg-white">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 text-sm">
+      <a id="my-order-link-mobile" href="#my-order" class="hidden py-2 hover:text-brand-red">My Order</a>
+      <a href="#about" class="py-2 hover:text-brand-red">About</a>
+      <a href="#menu" class="py-2 hover:text-brand-red">Menu</a>
+      <a href="#gallery" class="py-2 hover:text-brand-red">Gallery</a>
+      <a href="#reserve" class="py-2 hover:text-brand-red">Reserve</a>
+      <a href="#contact" class="py-2 hover:text-brand-red">Contact</a>
+    </div>
+  </div>
+</header>
+
 
   <!-- Hero -->
   <section id="top" class="bg-white">
@@ -768,6 +797,7 @@
       document.getElementById("my-order-link-mobile")?.classList.remove("hidden");
       document.getElementById("my-order-btn")?.classList.remove("hidden");
       document.getElementById("my-order-footer")?.classList.remove("hidden");
+      document.getElementById("my-order-btn-mobile")?.classList.remove("hidden");
     }
     function hideMyOrderTab() {
       document.getElementById("my-order")?.classList.add("hidden");
@@ -775,6 +805,7 @@
       document.getElementById("my-order-link-mobile")?.classList.add("hidden");
       document.getElementById("my-order-btn")?.classList.add("hidden");
       document.getElementById("my-order-footer")?.classList.add("hidden");
+      document.getElementById("my-order-btn-mobile")?.classList.add("hidden");
     }
 
     async function fetchOrderById(orderId) {
@@ -1026,10 +1057,16 @@
     }
 
     function updateCartCount() {
-      const count = cart.reduce((s, i) => s + i.qty, 0);
-      $("#cart-count").textContent = count;
-      updateFloatingCart(); // ✅ keep floating button in sync
-    }
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+
+  const desktop = document.getElementById("cart-count");
+  if (desktop) desktop.textContent = count;
+
+  const mobile = document.getElementById("cart-count-mobile");
+  if (mobile) mobile.textContent = count;
+
+  updateFloatingCart();
+}
 
     // MENU
     async function fetchMenu() {
@@ -1373,55 +1410,39 @@
 
 
     function bindUI() {
-      $("#mobile-btn").onclick = () => $("#mobile-nav").classList.toggle("hidden");
-      $("#mobile-nav")
-        .querySelectorAll("a")
-        .forEach((a) => (a.onclick = () => $("#mobile-nav").classList.add("hidden")));
-      $("#cart-btn").onclick = openCart;
-      $("#cart-close").onclick = closeCart;
-      $("#drawer-backdrop").onclick = closeCart;
+  // Mobile menu toggle
+  $("#mobile-btn").onclick = () =>
+    $("#mobile-nav").classList.toggle("hidden");
 
-      // ✅ Floating cart
-      document.getElementById("floating-cart").onclick = openCart;
+  $("#mobile-nav")
+    .querySelectorAll("a")
+    .forEach(
+      (a) => (a.onclick = () => $("#mobile-nav").classList.add("hidden"))
+    );
 
-      // // Gateway bindings
-      // document.getElementById("gateway-backdrop").onclick = closeGateway;
-      // document.getElementById("gateway-close").onclick = closeGateway;
-      // document.getElementById("gw-cancel").onclick = closeGateway;
+  // Cart (desktop + mobile)
+  $("#cart-btn")?.addEventListener("click", openCart);
+  document
+    .getElementById("cart-btn-mobile")
+    ?.addEventListener("click", openCart);
 
-      // document.getElementById("gw-pay").onclick = async () => {
-      //   const payBtn = document.getElementById("gw-pay");
-      //   const statusEl = document.getElementById("gw-status");
+  // Cart close
+  $("#cart-close").onclick = closeCart;
+  $("#drawer-backdrop").onclick = closeCart;
 
-      //   statusEl.textContent = "Processing...";
-      //   statusEl.className = "font-semibold text-neutral-700";
-      //   payBtn.disabled = true;
+  // Floating cart
+  document.getElementById("floating-cart").onclick = openCart;
 
-      //   setTimeout(() => {
-      //     statusEl.textContent = "Payment success ✅";
-      //     statusEl.className = "font-semibold text-green-700";
+  // Payment modal
+  document.getElementById("pay-backdrop").onclick = closePayModal;
+  document.getElementById("pay-close").onclick = closePayModal;
+  document.getElementById("pay-submit").onclick = processMockPayment;
 
-      //     setTimeout(() => {
-      //       closeGateway();
+  // Input formatting
+  formatCardInput();
+  formatExpInput();
+}
 
-      //       // after payment -> show my order
-      //       showMyOrderTab();
-      //       window.location.hash = "my-order";
-      //       loadMyOrderFromDevice();
-
-      //       payBtn.disabled = false;
-      //     }, 600);
-      //   }, 900);
-      // };
-      // ✅ Payment modal bindings
-      document.getElementById("pay-backdrop").onclick = closePayModal;
-      document.getElementById("pay-close").onclick = closePayModal;
-      document.getElementById("pay-submit").onclick = processMockPayment;
-
-      formatCardInput();
-      formatExpInput();
-
-    }
 
     // CREATE ORDER -> show mock gateway BEFORE navigating to #my-order
     async function submitOrder(e) {
