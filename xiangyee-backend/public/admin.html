@@ -262,6 +262,7 @@
   function doLogout() {
     token = null;
     localStorage.removeItem("xiangyee_token");
+    clearAutoRefresh();
     clearOrdersStream(); // stop SSE
     setAuthedUI(false);
   }
@@ -303,6 +304,7 @@
       loadReservations(true);
       loadMenuAdmin(true);
 
+      setupAutoRefresh();
       setupOrdersStream(); // ✅ start SSE
 
     } catch (err) {
@@ -492,6 +494,7 @@
         body: JSON.stringify({ status: sel.value })
       });
       unreadOrderIds.delete(o.id);
+      loadOrders(true);
     };
 
     return div;
@@ -888,6 +891,24 @@
   document.getElementById("menu-category").addEventListener("change", refreshMenuView);
   document.getElementById("menu-availability").addEventListener("change", refreshMenuView);
 
+  // ====== AUTO REFRESH ======
+  function setupAutoRefresh() {
+    clearAutoRefresh();
+
+    // Orders polling is now just fallback (SSE handles real-time)
+    ordersInterval = setInterval(() => { if (token) loadOrders(false); }, 30000);
+
+    // Reservations still poll
+    resInterval = setInterval(() => { if (token) loadReservations(false); }, 5000);
+  }
+
+  function clearAutoRefresh() {
+    if (ordersInterval) clearInterval(ordersInterval);
+    if (resInterval) clearInterval(resInterval);
+    ordersInterval = null;
+    resInterval = null;
+  }
+
   document.getElementById("login-form").addEventListener("submit", login);
   logoutBtn.onclick = doLogout;
 
@@ -896,6 +917,7 @@
     loadOrders(true);
     loadReservations(true);
     loadMenuAdmin(true);
+    setupAutoRefresh();
     setupOrdersStream(); // start SSE on reload
   } else {
     setAuthedUI(false);
