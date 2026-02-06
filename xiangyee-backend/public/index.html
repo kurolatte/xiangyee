@@ -18,6 +18,7 @@
       theme: {
         extend: {
           fontFamily: {
+            // ✅ Use dynasty fonts as your default
             sans: ['"Noto Serif SC"', '"ZCOOL XiaoWei"', 'serif'],
             dynasty: ['"ZCOOL XiaoWei"', '"Noto Serif SC"', 'serif'],
           },
@@ -37,11 +38,13 @@
     .zoomable { cursor: zoom-in;transition: transform 220ms ease, box-shadow 220ms ease;will-change: transform; }
     @media (hover: hover) and (pointer: fine) { .zoomable:hover { transform: scale(1.06); }
   }
+  /* ✅ Dynasty headings */
   h1, h2, h3, .dynasty-title {
     font-family: "ZCOOL XiaoWei", "Noto Serif SC", serif !important;
     letter-spacing: 0.03em;
   }
 
+  /* ✅ Body text: elegant serif but readable */
   body {
     font-family: "Noto Serif SC", ui-sans-serif, system-ui, serif !important;
   }
@@ -79,6 +82,12 @@
 
       <!-- Actions (desktop) + mobile menu -->
       <div class="flex items-center gap-2">
+        <!-- Desktop My Order -->
+        <a id="my-order-btn"
+           href="#my-order"
+           class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
+          My Order
+        </a>
 
         <!-- Desktop Cart -->
         <button id="cart-btn"
@@ -487,7 +496,7 @@
     </div>
   </footer>
 
-  <!-- Cart Drawer -->
+  <!-- Cart Drawer (KEEP ONLY THIS ONE) -->
   <aside id="cart-drawer"
     class="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white border-l border-neutral-200 shadow-2xl translate-x-full transition-transform duration-300 z-[100] flex flex-col">
 
@@ -552,7 +561,7 @@
 
   <div id="drawer-backdrop" class="fixed inset-0 bg-black/40 z-[55] hidden"></div>
 
-  <!-- Floating Cart Button (appears only when cart has items) -->
+  <!-- ✅ Floating Cart Button (appears only when cart has items) -->
   <button id="floating-cart"
     class="hidden fixed bottom-5 right-5 z-[70] rounded-full bg-brand-red text-white shadow-soft border border-red-700/20
            px-4 py-3 flex items-center gap-2 hover:bg-red-700 active:scale-95 transition">
@@ -677,7 +686,7 @@
     let menuItems = [];
     let cart = [];
 
-    // CART STORAGE (ensure numeric ids/qty/price)
+    // CART STORAGE (HARDENED: ensure numeric ids/qty/price)
     function saveCart() {
       localStorage.setItem("xiangyee_cart", JSON.stringify(cart));
     }
@@ -704,7 +713,7 @@
       }
     }
 
-    // FLOATING CART BUTTON
+    // ✅ FLOATING CART BUTTON
     function updateFloatingCart() {
       const btn = document.getElementById("floating-cart");
       const badge = document.getElementById("floating-cart-count");
@@ -735,12 +744,15 @@
 
     function showMyOrderTab() {
       document.getElementById("my-order")?.classList.remove("hidden");
+      document.getElementById("my-order-link")?.classList.remove("hidden");
+      document.getElementById("my-order-link-mobile")?.classList.remove("hidden");
       document.getElementById("my-order-footer")?.classList.remove("hidden");
       document.getElementById("my-order-btn-mobile")?.classList.remove("hidden");
     }
-
     function hideMyOrderTab() {
       document.getElementById("my-order")?.classList.add("hidden");
+      document.getElementById("my-order-link")?.classList.add("hidden");
+      document.getElementById("my-order-link-mobile")?.classList.add("hidden");
       document.getElementById("my-order-footer")?.classList.add("hidden");
       document.getElementById("my-order-btn-mobile")?.classList.add("hidden");
     }
@@ -751,7 +763,7 @@
       return res.json();
     }
 
-    // customer mark as collected
+    // customer mark as collected (with verification)
     async function markOrderCollected(orderId) {
       const last = loadLastOrder();
       if (!last?.order_no || !last?.customer_phone) {
@@ -973,8 +985,8 @@
 
       saveCart();
       renderCart();
-      updateCartCount(); 
-      openCart();        
+      updateCartCount();   // ✅ also updates floating cart
+      openCart();          // optional: comment if you don't want auto open
     }
 
     function updateQty(id, delta) {
@@ -986,7 +998,7 @@
 
       saveCart();
       renderCart();
-      updateCartCount(); // 
+      updateCartCount(); // ✅ also updates floating cart
     }
 
     function cartTotal() {
@@ -1137,7 +1149,8 @@
       document.body.classList.remove("overflow-hidden");
     }
 
-    // SIMPLE PAYMENT MODAL (IN-PAGE, NO BACKEND)
+    // ✅ SIMPLE PAYMENT MODAL (IN-PAGE, NO BACKEND)
+    // --------------------
     let pendingOrderId = null;
     let pendingOrderNo = null;
     let pendingAmount = 0;
@@ -1260,7 +1273,7 @@
         }
 
         resetPayForm();
-        // success → go to My Order
+        // ✅ success → go to My Order
         closePayModal();
         showMyOrderTab();
         window.location.hash = "my-order";
@@ -1416,11 +1429,12 @@
       cart = [];
       saveCart();
       renderCart();
-      updateCartCount();      
+      updateCartCount();       // ✅ hides floating cart because cart is empty now
       form.reset();
       closeCart();
 
-      // show gateway first, openGateway
+      // show gateway first (✅ show order_no, not order_id)
+      // openGateway(data.order_no, amount, data.order_id);
       openPayModal(data.order_no, amount, data.order_id);
       return;
     }
@@ -1599,7 +1613,9 @@
       });
     }
 
+    // --------------------
     // MENU IMAGE LIGHTBOX
+    // --------------------
     function openLightbox(src, caption = "") {
       const modal = document.getElementById("img-lightbox");
       const img = document.getElementById("img-lightbox-img");
@@ -1669,6 +1685,7 @@
 
       loadMyOrderFromDevice();
 
+      // ✅ Add this:
       loadInstagramFeed();
     }
 
@@ -1726,7 +1743,9 @@
       go(0);
     })();
 
-    // INSTAGRAM FEED
+    // --------------------
+    // INSTAGRAM FEED (dynamic)
+    // --------------------
     async function loadInstagramFeed() {
       const grid = document.getElementById("ig-grid");
       const errBox = document.getElementById("ig-error");
