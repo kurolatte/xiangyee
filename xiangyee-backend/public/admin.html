@@ -118,7 +118,7 @@
   <!-- Toast container -->
   <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
 
-  <!-- ✅ EDIT MODAL -->
+  <!-- EDIT MODAL -->
   <div id="edit-modal" class="fixed inset-0 hidden z-50">
     <div id="edit-backdrop" class="absolute inset-0 bg-black/40"></div>
     <div class="absolute inset-0 flex items-center justify-center p-4">
@@ -228,7 +228,7 @@
   }
 
   // =========================
-  // ✅ SSE: Real-time push for Orders
+  // SSE: Real-time push for Orders
   // =========================
   let ordersStream = null;
 
@@ -263,7 +263,7 @@
     token = null;
     localStorage.removeItem("xiangyee_token");
     clearAutoRefresh();
-    clearOrdersStream(); // ✅ stop SSE
+    clearOrdersStream(); // stop SSE
     setAuthedUI(false);
   }
 
@@ -895,7 +895,7 @@
   function setupAutoRefresh() {
     clearAutoRefresh();
 
-    // ✅ Orders polling is now just fallback (SSE handles real-time)
+    // Orders polling is now just fallback (SSE handles real-time)
     ordersInterval = setInterval(() => { if (token) loadOrders(false); }, 30000);
 
     // Reservations still poll
@@ -918,7 +918,7 @@
     loadReservations(true);
     loadMenuAdmin(true);
     setupAutoRefresh();
-    setupOrdersStream(); // ✅ start SSE on reload
+    setupOrdersStream(); // start SSE on reload
   } else {
     setAuthedUI(false);
   }

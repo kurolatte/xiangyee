@@ -4,13 +4,13 @@ const { pool } = require("../db");
 const { z } = require("zod");
 const { requireAuth } = require("../middleware/auth");
 
-// ✅ ADD: jwt for verifying SSE token
+// ADD: jwt for verifying SSE token
 const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
 /* =========================
-   ✅ SSE: REAL-TIME PUSH (ADMIN)
+  SSE: REAL-TIME PUSH (ADMIN)
 ========================= */
 const sseClients = new Set();
 
@@ -29,7 +29,7 @@ function broadcast(event, data) {
   }
 }
 
-// keep-alive ping (helps with proxies)
+// keep-alive ping 
 setInterval(() => {
   for (const client of sseClients) {
     try {
@@ -39,7 +39,7 @@ setInterval(() => {
 }, 25000);
 
 /* =========================
-   ✅ ADMIN: SSE STREAM
+   ADMIN: SSE STREAM
    GET /api/orders/stream?token=JWT
 ========================= */
 router.get("/stream", (req, res) => {
@@ -47,11 +47,9 @@ router.get("/stream", (req, res) => {
     const token = String(req.query.token || "");
     if (!token) return res.status(401).json({ message: "No token" });
 
-    // verify token (same secret as your normal auth)
+    // verify token 
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Optional: enforce admin role if present in token
-    // if (payload?.role !== "admin") return res.status(403).json({ message: "Admin only" });
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -217,10 +215,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-/* =========================
-   PUBLIC: TRACK ORDER
-   GET /api/orders/track/:orderNo
-========================= */
+   // PUBLIC: TRACK ORDER
+   // GET /api/orders/track/:orderNo
 router.get("/track/:orderNo", async (req, res) => {
   try {
     const { orderNo } = req.params;
@@ -293,7 +289,7 @@ router.post("/:id(\\d+)/collected", async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // ✅ PUSH EVENT: order collected
+    // PUSH: order collected
     broadcast("orders_updated", {
       action: "collected",
       order_id: id,
@@ -322,10 +318,8 @@ router.post("/:id(\\d+)/collected", async (req, res) => {
   }
 });
 
-/* =========================
-   PUBLIC: GET ORDER BY ID (TESTING)
-   GET /api/orders/:id
-========================= */
+// PUBLIC: GET ORDER BY ID (TESTING)
+// GET /api/orders/:id
 router.get("/:id(\\d+)", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -355,10 +349,9 @@ router.get("/:id(\\d+)", async (req, res) => {
   }
 });
 
-/* =========================
-   ✅ ADMIN: LIST ORDERS (WITH ITEMS)
-   GET /api/orders/admin
-========================= */
+// ADMIN: LIST ORDERS (WITH ITEMS)
+// GET /api/orders/admin
+
 router.get("/admin", requireAuth, async (req, res) => {
   try {
     const r = await pool.query(`
@@ -391,10 +384,8 @@ router.get("/admin", requireAuth, async (req, res) => {
   }
 });
 
-/* =========================
-   ADMIN: UPDATE STATUS
-   PUT /api/orders/:id
-========================= */
+// ADMIN: UPDATE STATUS
+// PUT /api/orders/:id
 router.put("/:id(\\d+)", requireAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -418,7 +409,7 @@ router.put("/:id(\\d+)", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // ✅ PUSH EVENT: status updated by admin
+    // PUSH : status updated by admin
     broadcast("orders_updated", {
       action: "status_updated",
       order_id: id,

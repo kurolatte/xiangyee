@@ -10,7 +10,7 @@ router.get("/media", async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit || 8), 12);
 
-    // Basic Display token (LONG-LIVED recommended)
+    // Basic Display token
     const ACCESS_TOKEN = (process.env.IG_BASIC_ACCESS_TOKEN || "").trim();
     if (!ACCESS_TOKEN) {
       return res.status(500).send("Missing IG_BASIC_ACCESS_TOKEN in env.");
@@ -43,7 +43,7 @@ router.get("/media", async (req, res) => {
     const text = await r.text();
 
     if (!r.ok) {
-      // Pass through IG errors so you can see them in frontend/backend logs
+      // Pass through IG errors 
       return res.status(r.status).send(text);
     }
 

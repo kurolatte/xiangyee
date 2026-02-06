@@ -18,7 +18,6 @@
       theme: {
         extend: {
           fontFamily: {
-            // ✅ Use dynasty fonts as your default
             sans: ['"Noto Serif SC"', '"ZCOOL XiaoWei"', 'serif'],
             dynasty: ['"ZCOOL XiaoWei"', '"Noto Serif SC"', 'serif'],
           },
@@ -38,13 +37,11 @@
     .zoomable { cursor: zoom-in;transition: transform 220ms ease, box-shadow 220ms ease;will-change: transform; }
     @media (hover: hover) and (pointer: fine) { .zoomable:hover { transform: scale(1.06); }
   }
-  /* ✅ Dynasty headings */
   h1, h2, h3, .dynasty-title {
     font-family: "ZCOOL XiaoWei", "Noto Serif SC", serif !important;
     letter-spacing: 0.03em;
   }
 
-  /* ✅ Body text: elegant serif but readable */
   body {
     font-family: "Noto Serif SC", ui-sans-serif, system-ui, serif !important;
   }
@@ -490,7 +487,7 @@
     </div>
   </footer>
 
-  <!-- Cart Drawer (KEEP ONLY THIS ONE) -->
+  <!-- Cart Drawer -->
   <aside id="cart-drawer"
     class="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white border-l border-neutral-200 shadow-2xl translate-x-full transition-transform duration-300 z-[100] flex flex-col">
 
@@ -555,7 +552,7 @@
 
   <div id="drawer-backdrop" class="fixed inset-0 bg-black/40 z-[55] hidden"></div>
 
-  <!-- ✅ Floating Cart Button (appears only when cart has items) -->
+  <!-- Floating Cart Button (appears only when cart has items) -->
   <button id="floating-cart"
     class="hidden fixed bottom-5 right-5 z-[70] rounded-full bg-brand-red text-white shadow-soft border border-red-700/20
            px-4 py-3 flex items-center gap-2 hover:bg-red-700 active:scale-95 transition">
@@ -680,7 +677,7 @@
     let menuItems = [];
     let cart = [];
 
-    // CART STORAGE (HARDENED: ensure numeric ids/qty/price)
+    // CART STORAGE (ensure numeric ids/qty/price)
     function saveCart() {
       localStorage.setItem("xiangyee_cart", JSON.stringify(cart));
     }
@@ -707,7 +704,7 @@
       }
     }
 
-    // ✅ FLOATING CART BUTTON
+    // FLOATING CART BUTTON
     function updateFloatingCart() {
       const btn = document.getElementById("floating-cart");
       const badge = document.getElementById("floating-cart-count");
@@ -754,7 +751,7 @@
       return res.json();
     }
 
-    // customer mark as collected (with verification)
+    // customer mark as collected
     async function markOrderCollected(orderId) {
       const last = loadLastOrder();
       if (!last?.order_no || !last?.customer_phone) {
@@ -976,8 +973,8 @@
 
       saveCart();
       renderCart();
-      updateCartCount();   // ✅ also updates floating cart
-      openCart();          // optional: comment if you don't want auto open
+      updateCartCount(); 
+      openCart();        
     }
 
     function updateQty(id, delta) {
@@ -989,7 +986,7 @@
 
       saveCart();
       renderCart();
-      updateCartCount(); // ✅ also updates floating cart
+      updateCartCount(); // 
     }
 
     function cartTotal() {
@@ -1140,8 +1137,7 @@
       document.body.classList.remove("overflow-hidden");
     }
 
-    // ✅ SIMPLE PAYMENT MODAL (IN-PAGE, NO BACKEND)
-    // --------------------
+    // SIMPLE PAYMENT MODAL (IN-PAGE, NO BACKEND)
     let pendingOrderId = null;
     let pendingOrderNo = null;
     let pendingAmount = 0;
@@ -1264,7 +1260,7 @@
         }
 
         resetPayForm();
-        // ✅ success → go to My Order
+        // success → go to My Order
         closePayModal();
         showMyOrderTab();
         window.location.hash = "my-order";
@@ -1420,12 +1416,11 @@
       cart = [];
       saveCart();
       renderCart();
-      updateCartCount();       // ✅ hides floating cart because cart is empty now
+      updateCartCount();      
       form.reset();
       closeCart();
 
-      // show gateway first (✅ show order_no, not order_id)
-      // openGateway(data.order_no, amount, data.order_id);
+      // show gateway first, openGateway
       openPayModal(data.order_no, amount, data.order_id);
       return;
     }
@@ -1604,9 +1599,7 @@
       });
     }
 
-    // --------------------
     // MENU IMAGE LIGHTBOX
-    // --------------------
     function openLightbox(src, caption = "") {
       const modal = document.getElementById("img-lightbox");
       const img = document.getElementById("img-lightbox-img");
@@ -1676,7 +1669,6 @@
 
       loadMyOrderFromDevice();
 
-      // ✅ Add this:
       loadInstagramFeed();
     }
 
@@ -1734,9 +1726,7 @@
       go(0);
     })();
 
-    // --------------------
-    // INSTAGRAM FEED (dynamic)
-    // --------------------
+    // INSTAGRAM FEED
     async function loadInstagramFeed() {
       const grid = document.getElementById("ig-grid");
       const errBox = document.getElementById("ig-error");

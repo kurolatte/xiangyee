@@ -16,9 +16,7 @@ const ReservationSchema = z.object({
   notes: z.string().optional().nullable()
 });
 
-// --------------------
 // POST /api/reservations
-// --------------------
 router.post("/", async (req, res) => {
   const parsed = ReservationSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
@@ -100,10 +98,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-// --------------------
 // GET /api/reservations/availability
 // returns counts per time slot + maxPerSlot
-// --------------------
 router.get("/availability", async (req, res) => {
   try {
     const { date } = req.query;
@@ -132,10 +128,8 @@ router.get("/availability", async (req, res) => {
   }
 });
 
-// --------------------
 // PUBLIC: list reservations (optional by date)
 // GET /api/reservations?date=YYYY-MM-DD
-// --------------------
 router.get("/", async (req, res) => {
   try {
     const { date } = req.query;
@@ -187,10 +181,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// --------------------
 // ADMIN: list reservations
 // GET /api/reservations/admin
-// --------------------
 router.get("/admin", requireAuth, async (req, res) => {
   try {
     const r = await pool.query(
@@ -216,9 +208,7 @@ router.get("/admin", requireAuth, async (req, res) => {
   }
 });
 
-// --------------------
 // PATCH /api/reservations/:id/status
-// --------------------
 router.patch("/:id/status", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -244,9 +234,8 @@ router.patch("/:id/status", async (req, res) => {
   }
 });
 
-// --------------------
+
 // PUT /api/reservations/:id (ADMIN)
-// --------------------
 router.put("/:id", requireAuth, async (req, res) => {
   try {
     const { status } = req.body || {};
