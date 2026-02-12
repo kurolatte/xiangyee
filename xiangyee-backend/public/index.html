@@ -1448,6 +1448,8 @@ async function loadMyOrderFromDevice() {
       url.searchParams.set("order_id", data.order_id);
       history.replaceState({}, "", url.toString());
 
+      loadMyOrderFromDevice();
+
       // clear cart + close drawer
       cart = [];
       saveCart();
