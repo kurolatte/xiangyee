@@ -72,6 +72,7 @@
       <nav class="hidden md:flex items-center gap-6 text-sm">
         <a href="#about" class="hover:text-brand-red">About</a>
         <a href="#menu" class="hover:text-brand-red">Menu</a>
+        <a id="my-order-link" href="#my-order" class="hidden hover:text-brand-red">My Order</a>
         <a href="#gallery" class="hover:text-brand-red">Gallery</a>
         <a href="#reserve" class="hover:text-brand-red">Reserve</a>
         <a href="#contact" class="hover:text-brand-red">Contact</a>
@@ -85,6 +86,12 @@
           class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
           Cart (<span id="cart-count">0</span>)
         </button>
+
+        <a id="my-order-btn"
+          href="#my-order"
+          class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
+          My Order
+        </a>
 
         <!-- Desktop Book -->
         <a href="#reserve"
@@ -480,6 +487,7 @@
       <div class="flex items-center gap-4">
         <a href="#about" class="hover:text-brand-red">About</a>
         <a href="#menu" class="hover:text-brand-red">Menu</a>
+        <a id="my-order-link-mobile" href="#my-order" class="hidden py-2 hover:text-brand-red">My Order</a>
         <a id="my-order-footer" href="#my-order" class="hidden hover:text-brand-red">My Order</a>
         <a href="#reserve" class="hover:text-brand-red">Reserve</a>
         <a href="#contact" class="hover:text-brand-red">Contact</a>
@@ -739,12 +747,22 @@ function showMyOrderTab() {
   document.getElementById("my-order")?.classList.remove("hidden");
   document.getElementById("my-order-footer")?.classList.remove("hidden");
   document.getElementById("my-order-btn-mobile")?.classList.remove("hidden");
+
+  document.getElementById("my-order-link")?.classList.remove("hidden");
+  document.getElementById("my-order-btn")?.classList.remove("hidden");
+  document.getElementById("my-order-link-mobile")?.classList.remove("hidden");
 }
+
 function hideMyOrderTab() {
   document.getElementById("my-order")?.classList.add("hidden");
   document.getElementById("my-order-footer")?.classList.add("hidden");
   document.getElementById("my-order-btn-mobile")?.classList.add("hidden");
+
+  document.getElementById("my-order-link")?.classList.add("hidden");
+  document.getElementById("my-order-btn")?.classList.add("hidden");
+  document.getElementById("my-order-link-mobile")?.classList.add("hidden");
 }
+
 
 function getQueryParam(name) {
   const url = new URL(window.location.href);
@@ -1413,6 +1431,17 @@ async function loadMyOrderFromDevice() {
       });
 
       showMyOrderTab();
+
+      // Show order details immediately
+      try {
+        const o = await fetchOrderById(data.order_id);
+        renderMyOrderUI(o);
+
+        const s = String(o.status || "").toLowerCase();
+        if (s !== "collected") startOrderStream(o.id);
+      } catch (e) {
+        console.warn("Could not load order immediately:", e);
+      }
 
       // update URL with order_id (no reload)
       const url = new URL(window.location.href);
