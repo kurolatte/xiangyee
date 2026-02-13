@@ -34,7 +34,7 @@
     scroll-padding-top: var(--header-offset, 110px);
   }
 
-  section { scroll-margin-top: var(--header-offset, 110px); }
+  [id] { scroll-margin-top: var(--header-offset, 110px); }
 
     .backdrop { background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)); }
     .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.08); }
@@ -1737,6 +1737,46 @@ async function loadMyOrderFromDevice() {
     });
   });
 }
+
+    function scrollToHash(hash) {
+  if (!hash || !hash.startsWith("#")) return;
+
+  if (hash === "#my-order") showMyOrderTab(); // if needed
+
+  const target = document.querySelector(hash);
+  if (!target) return;
+
+  setHeaderOffset();
+  requestAnimationFrame(() => {
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+  // handle all internal anchor clicks 
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+
+    const hash = a.getAttribute("href");
+    const target = document.querySelector(hash);
+    if (!target) return;
+
+    e.preventDefault();
+
+    // close mobile menu first (if open)
+    const mobileNav = document.getElementById("mobile-nav");
+    const mobileBtn = document.getElementById("mobile-btn");
+    if (mobileNav && mobileBtn && !mobileNav.classList.contains("hidden")) {
+      mobileNav.classList.add("hidden");
+      mobileBtn.setAttribute("aria-expanded", "false");
+    }
+
+    history.pushState(null, "", hash);
+    scrollToHash(hash);
+  });
+
+  window.addEventListener("hashchange", () => scrollToHash(location.hash));
+
 
     function init() {
       $("#year").textContent = new Date().getFullYear();
