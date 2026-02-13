@@ -1741,16 +1741,31 @@ async function loadMyOrderFromDevice() {
     function scrollToHash(hash) {
   if (!hash || !hash.startsWith("#")) return;
 
-  if (hash === "#my-order") showMyOrderTab(); // if needed
+  if (hash === "#my-order") showMyOrderTab?.();
 
   const target = document.querySelector(hash);
   if (!target) return;
 
   setHeaderOffset();
+
+  // ✅ tune this if needed (try 8, 12, 16)
+  const EXTRA_GAP = 12;
+
+  // Wait 1 tick so header height is updated (esp after closing mobile nav)
   requestAnimationFrame(() => {
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    const header = document.querySelector("header");
+    const headerH = header ? header.getBoundingClientRect().height : 0;
+
+    const y =
+      window.scrollY +
+      target.getBoundingClientRect().top -
+      headerH -
+      EXTRA_GAP;
+
+    window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
   });
 }
+
 
   // handle all internal anchor clicks 
   document.addEventListener("click", (e) => {
@@ -1769,6 +1784,7 @@ async function loadMyOrderFromDevice() {
     if (mobileNav && mobileBtn && !mobileNav.classList.contains("hidden")) {
       mobileNav.classList.add("hidden");
       mobileBtn.setAttribute("aria-expanded", "false");
+      setHeaderOffset();
     }
 
     history.pushState(null, "", hash);
