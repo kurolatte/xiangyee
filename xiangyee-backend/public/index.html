@@ -72,7 +72,6 @@
       <nav class="hidden md:flex items-center gap-6 text-sm">
         <a href="#about" class="hover:text-brand-red">About</a>
         <a href="#menu" class="hover:text-brand-red">Menu</a>
-        <a id="my-order-link" href="#my-order" class="hidden hover:text-brand-red">My Order</a>
         <a href="#gallery" class="hover:text-brand-red">Gallery</a>
         <a href="#reserve" class="hover:text-brand-red">Reserve</a>
         <a href="#contact" class="hover:text-brand-red">Contact</a>
@@ -672,7 +671,6 @@
       let p = String(path).trim();
       if (!p) return "";
       p = p.replace(/\\/g, "/");
-      p = p.replace(/^\/?images\/menu\//, "menu/");
       p = p.replace(/^\/+/, "");
       if (/^https?:\/\//i.test(p)) return p;
       return `${ASSET_BASE}/${p}`;
@@ -748,7 +746,6 @@ function showMyOrderTab() {
   document.getElementById("my-order-footer")?.classList.remove("hidden");
   document.getElementById("my-order-btn-mobile")?.classList.remove("hidden");
 
-  document.getElementById("my-order-link")?.classList.remove("hidden");
   document.getElementById("my-order-btn")?.classList.remove("hidden");
   document.getElementById("my-order-link-mobile")?.classList.remove("hidden");
 }
@@ -758,7 +755,6 @@ function hideMyOrderTab() {
   document.getElementById("my-order-footer")?.classList.add("hidden");
   document.getElementById("my-order-btn-mobile")?.classList.add("hidden");
 
-  document.getElementById("my-order-link")?.classList.add("hidden");
   document.getElementById("my-order-btn")?.classList.add("hidden");
   document.getElementById("my-order-link-mobile")?.classList.add("hidden");
 }
@@ -916,7 +912,7 @@ function startOrderStream(orderId) {
   stopOrderStream();
   activeOrderId = orderId;
 
-  // IMPORTANT: this endpoint must exist on backend
+  // endpoint on backend
   const url = `${API_BASE}/orders/${encodeURIComponent(orderId)}/stream`;
   orderStream = new EventSource(url);
 
