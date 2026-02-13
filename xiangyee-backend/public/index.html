@@ -34,6 +34,12 @@
     scroll-padding-top: var(--header-offset, 110px);
   }
 
+  section { scroll-margin-top: 110px; }
+  @media (min-width: 768px) {
+    section { scroll-margin-top: 90px; }
+  }
+
+
     .backdrop { background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)); }
     .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.08); }
     .no-scrollbar::-webkit-scrollbar { display:none; }
@@ -61,10 +67,10 @@
 <header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-neutral-200">
   <div class="max-w-6xl mx-auto px-4 py-3">
 
-    <!-- ROW 1 -->
-    <div class="flex items-center justify-between">
+    <!-- Top bar: Logo + (Desktop Nav) + (Actions/Hamburger) -->
+    <div class="flex items-center justify-between gap-3">
       <!-- Logo -->
-      <a href="#top" class="flex items-center">
+      <a href="#top" class="flex items-center shrink-0">
         <img
           src="/images/LOGO.png"
           alt="Xiangyee Hunan Cuisine"
@@ -72,7 +78,7 @@
         />
       </a>
 
-      <!-- Nav (desktop) -->
+      <!-- Desktop Nav -->
       <nav class="hidden md:flex items-center gap-6 text-sm">
         <a href="#about" class="hover:text-brand-red">About</a>
         <a href="#menu" class="hover:text-brand-red">Menu</a>
@@ -81,10 +87,9 @@
         <a href="#contact" class="hover:text-brand-red">Contact</a>
       </nav>
 
-      <!-- Actions (desktop) + mobile menu -->
-      <div class="flex items-center gap-2">
-
-        <!-- Desktop Cart -->
+      <!-- Right side actions -->
+      <div class="flex items-center gap-2 shrink-0">
+        <!-- Desktop actions -->
         <button id="cart-btn"
           class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
           Cart (<span id="cart-count">0</span>)
@@ -96,29 +101,33 @@
           My Order
         </a>
 
-        <!-- Desktop Book -->
         <a href="#reserve"
            class="hidden md:inline-flex px-4 py-2 rounded-xl bg-brand-red text-white font-semibold shadow-soft hover:bg-red-700">
           Book a Table
         </a>
 
-        <!-- Mobile ☰ -->
-        <button id="mobile-btn" class="md:hidden p-2 rounded-lg border border-neutral-300">
+        <!-- Mobile hamburger -->
+        <button id="mobile-btn"
+          class="md:hidden p-2 rounded-lg border border-neutral-300 bg-white"
+          aria-label="Open menu"
+          aria-expanded="false"
+          type="button">
           ☰
         </button>
       </div>
     </div>
 
-    <!-- ROW 2 (mobile buttons) -->
+    <!-- Mobile actions row (ONLY on mobile) -->
     <div class="md:hidden mt-3 grid grid-cols-3 gap-2">
       <a id="my-order-btn-mobile"
          href="#my-order"
-         class="hidden px-3 py-2 rounded-xl border border-neutral-300 bg-white font-semibold text-center hover:border-brand-red hover:text-brand-red">
+         class="px-3 py-2 rounded-xl border border-neutral-300 bg-white font-semibold text-center hover:border-brand-red hover:text-brand-red">
         My Order
       </a>
 
       <button id="cart-btn-mobile"
-        class="px-3 py-2 rounded-xl border border-neutral-300 bg-white font-semibold text-center hover:border-brand-red hover:text-brand-red">
+        class="px-3 py-2 rounded-xl border border-neutral-300 bg-white font-semibold text-center hover:border-brand-red hover:text-brand-red"
+        type="button">
         Cart (<span id="cart-count-mobile">0</span>)
       </button>
 
@@ -127,20 +136,21 @@
         Book
       </a>
     </div>
+
   </div>
 
-  <!-- Mobile Nav -->
+  <!-- Mobile Nav dropdown -->
   <div id="mobile-nav" class="md:hidden hidden border-t border-neutral-200 bg-white">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-2 text-sm">
       <a href="#about" class="py-2 hover:text-brand-red">About</a>
       <a href="#menu" class="py-2 hover:text-brand-red">Menu</a>
       <a href="#gallery" class="py-2 hover:text-brand-red">Gallery</a>
+      <a href="#instagram" class="py-2 hover:text-brand-red">Instagram</a>
       <a href="#reserve" class="py-2 hover:text-brand-red">Reserve</a>
       <a href="#contact" class="py-2 hover:text-brand-red">Contact</a>
     </div>
   </div>
 </header>
-
 
   <!-- Hero -->
   <section id="top" class="bg-white">
@@ -1328,24 +1338,30 @@ async function loadMyOrderFromDevice() {
 
     function bindUI() {
   // Mobile menu toggle
-  $("#mobile-btn").onclick = () =>
-    $("#mobile-nav").classList.toggle("hidden");
+  const mobileBtn = document.getElementById("mobile-btn");
+  const mobileNav = document.getElementById("mobile-nav");
 
-  $("#mobile-nav")
-    .querySelectorAll("a")
-    .forEach(
-      (a) => (a.onclick = () => $("#mobile-nav").classList.add("hidden"))
-    );
+  if (mobileBtn && mobileNav) {
+    mobileBtn.onclick = () => {
+      const isHidden = mobileNav.classList.toggle("hidden");
+      mobileBtn.setAttribute("aria-expanded", String(!isHidden));
+    };
+
+    mobileNav.querySelectorAll("a").forEach((a) => {
+      a.onclick = () => {
+        mobileNav.classList.add("hidden");
+        mobileBtn.setAttribute("aria-expanded", "false");
+      };
+    });
+  }
 
   // Cart (desktop + mobile)
-  $("#cart-btn")?.addEventListener("click", openCart);
-  document
-    .getElementById("cart-btn-mobile")
-    ?.addEventListener("click", openCart);
+  document.getElementById("cart-btn")?.addEventListener("click", openCart);
+  document.getElementById("cart-btn-mobile")?.addEventListener("click", openCart);
 
   // Cart close
-  $("#cart-close").onclick = closeCart;
-  $("#drawer-backdrop").onclick = closeCart;
+  document.getElementById("cart-close").onclick = closeCart;
+  document.getElementById("drawer-backdrop").onclick = closeCart;
 
   // Floating cart
   document.getElementById("floating-cart").onclick = openCart;
