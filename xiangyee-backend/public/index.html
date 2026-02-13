@@ -1347,14 +1347,29 @@ async function loadMyOrderFromDevice() {
       setHeaderOffset();
     };
 
-    mobileNav.querySelectorAll("a").forEach((a) => {
-      a.onclick = () => {
-        mobileNav.classList.add("hidden");
-        mobileBtn.setAttribute("aria-expanded", "false");
+    mobileNav.querySelectorAll('a[href^="#"]').forEach((a) => {
+  a.addEventListener("click", (e) => {
+    const hash = a.getAttribute("href"); // "#gallery"
+    const target = document.querySelector(hash);
+    if (!target) return;
 
-        setTimeout(setHeaderOffset, 50);
-      };
-    });
+    e.preventDefault();
+
+    // 1) close menu first
+    mobileNav.classList.add("hidden");
+    mobileBtn.setAttribute("aria-expanded", "false");
+
+    // 2) recalc header offset after menu collapses
+    setTimeout(() => {
+      setHeaderOffset();
+
+      // 3) update URL and scroll 
+      history.pushState(null, "", hash);
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  });
+});
+
   }
 
   // Cart (desktop + mobile)
@@ -1715,6 +1730,21 @@ async function loadMyOrderFromDevice() {
       });
     }
 
+    function bindDesktopAnchorScroll() {
+  document.querySelectorAll('header nav a[href^="#"]').forEach((a) => {
+    a.addEventListener("click", (e) => {
+      const hash = a.getAttribute("href");
+      const target = document.querySelector(hash);
+      if (!target) return;
+
+      e.preventDefault();
+      history.pushState(null, "", hash);
+      setHeaderOffset();
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+}
+
     function init() {
       $("#year").textContent = new Date().getFullYear();
 
@@ -1724,6 +1754,7 @@ async function loadMyOrderFromDevice() {
       updateFloatingCart();
 
       bindUI();
+      bindDesktopAnchorScroll(); 
       bindReservationSlotsUI();
       
       bindLightboxUI();
