@@ -34,11 +34,7 @@
     scroll-padding-top: var(--header-offset, 110px);
   }
 
-  section { scroll-margin-top: 110px; }
-  @media (min-width: 768px) {
-    section { scroll-margin-top: 90px; }
-  }
-
+  section { scroll-margin-top: var(--header-offset, 110px); }
 
     .backdrop { background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)); }
     .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.08); }
@@ -685,6 +681,7 @@
 
     window.addEventListener("load", setHeaderOffset);
     window.addEventListener("resize", setHeaderOffset);
+    window.addEventListener("hashchange", () => setTimeout(setHeaderOffset, 50));
     
     // CONFIG
     const API_BASE = "/api";
@@ -1346,12 +1343,16 @@ async function loadMyOrderFromDevice() {
     mobileBtn.onclick = () => {
       const isHidden = mobileNav.classList.toggle("hidden");
       mobileBtn.setAttribute("aria-expanded", String(!isHidden));
+
+      setHeaderOffset();
     };
 
     mobileNav.querySelectorAll("a").forEach((a) => {
       a.onclick = () => {
         mobileNav.classList.add("hidden");
         mobileBtn.setAttribute("aria-expanded", "false");
+
+        setTimeout(setHeaderOffset, 50);
       };
     });
   }
