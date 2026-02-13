@@ -97,7 +97,7 @@
 
         <a id="my-order-btn"
           href="#my-order"
-          class="hidden md:inline-flex px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
+          class="hidden md:inline-flex md:hidden px-4 py-2 rounded-xl border border-neutral-300 bg-white font-semibold hover:border-brand-red hover:text-brand-red">
           My Order
         </a>
 
@@ -120,10 +120,11 @@
     <!-- Mobile actions row (ONLY on mobile) -->
     <div class="md:hidden mt-3 grid grid-cols-3 gap-2">
       <a id="my-order-btn-mobile"
-         href="#my-order"
-         class="px-3 py-2 rounded-xl border border-neutral-300 bg-white font-semibold text-center hover:border-brand-red hover:text-brand-red">
+        href="#my-order"
+        class="hidden px-3 py-2 rounded-xl border border-neutral-300 bg-white font-semibold text-center hover:border-brand-red hover:text-brand-red">
         My Order
       </a>
+
 
       <button id="cart-btn-mobile"
         class="px-3 py-2 rounded-xl border border-neutral-300 bg-white font-semibold text-center hover:border-brand-red hover:text-brand-red"
@@ -768,19 +769,19 @@ function loadLastOrder() {
 function showMyOrderTab() {
   document.getElementById("my-order")?.classList.remove("hidden");
   document.getElementById("my-order-footer")?.classList.remove("hidden");
-  document.getElementById("my-order-btn-mobile")?.classList.remove("hidden");
-
-  document.getElementById("my-order-btn")?.classList.remove("hidden");
   document.getElementById("my-order-link-mobile")?.classList.remove("hidden");
+
+  document.getElementById("my-order-btn-mobile")?.classList.remove("hidden");
+  document.getElementById("my-order-btn")?.classList.remove("md:hidden");
 }
 
 function hideMyOrderTab() {
   document.getElementById("my-order")?.classList.add("hidden");
   document.getElementById("my-order-footer")?.classList.add("hidden");
-  document.getElementById("my-order-btn-mobile")?.classList.add("hidden");
-
-  document.getElementById("my-order-btn")?.classList.add("hidden");
   document.getElementById("my-order-link-mobile")?.classList.add("hidden");
+
+  document.getElementById("my-order-btn-mobile")?.classList.add("hidden");
+  document.getElementById("my-order-btn")?.classList.add("md:hidden");
 }
 
 
