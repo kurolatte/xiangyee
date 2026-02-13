@@ -4,14 +4,94 @@ const { pool } = require("../db");
 const { z } = require("zod");
 const { requireAuth } = require("../middleware/auth");
 
-// ADD: jwt for verifying SSE token
+// ADD: jwt for verifying SSE token (admin stream)
 const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
 /* =========================
-  SSE: REAL-TIME PUSH (ADMIN)
+   HELPERS
 ========================= */
+
+// Reusable: get order + items
+async function fetchOrderWithItems(id) {
+  const orderRes = await pool.query(`SELECT * FROM orders WHERE id = $1`, [id]);
+  const order = orderRes.rows?.[0];
+  if (!order) return null;
+
+  const itemsRes = await pool.query(
+    `
+    SELECT
+      oi.*,
+      mi.name_en,
+      mi.name_cn
+    FROM order_items oi
+    JOIN menu_items mi ON mi.id = oi.menu_item_id
+    WHERE oi.order_id = $1
+    ORDER BY oi.id ASC
+    `,
+    [id]
+  );
+
+  return { ...order, items: itemsRes.rows };
+}
+
+/* =========================
+  SSE: CUSTOMER (PER ORDER)
+  GET /api/orders/:id/stream
+========================= */
+
+const orderSseClients = new Map(); // orderId -> Set(res)
+
+function sseSendMessage(res, data) {
+  // default "message" event (what your index.html listens for)
+  res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+function sendToOrder(orderId, payload) {
+  const set = orderSseClients.get(orderId);
+  if (!set) return;
+  for (const res of set) {
+    try {
+      sseSendMessage(res, payload);
+    } catch {}
+  }
+}
+
+// CUSTOMER: SSE STREAM
+router.get("/:id(\\d+)/stream", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no"); // nginx: disable buffering
+  res.flushHeaders?.();
+
+  // register client
+  if (!orderSseClients.has(id)) orderSseClients.set(id, new Set());
+  orderSseClients.get(id).add(res);
+
+  // send initial snapshot immediately
+  try {
+    const snapshot = await fetchOrderWithItems(id);
+    if (snapshot) sseSendMessage(res, snapshot);
+  } catch {}
+
+  req.on("close", () => {
+    const set = orderSseClients.get(id);
+    if (set) {
+      set.delete(res);
+      if (set.size === 0) orderSseClients.delete(id);
+    }
+  });
+});
+
+/* =========================
+  SSE: REAL-TIME PUSH (ADMIN)
+  GET /api/orders/stream?token=JWT
+========================= */
+
 const sseClients = new Set();
 
 function sseSend(res, event, data) {
@@ -29,12 +109,22 @@ function broadcast(event, data) {
   }
 }
 
-// keep-alive ping 
+// keep-alive ping (admin + customer)
 setInterval(() => {
+  // admin pings
   for (const client of sseClients) {
     try {
       client.write(`: ping\n\n`);
     } catch {}
+  }
+
+  // customer pings
+  for (const set of orderSseClients.values()) {
+    for (const res of set) {
+      try {
+        res.write(`: ping\n\n`);
+      } catch {}
+    }
   }
 }, 25000);
 
@@ -47,15 +137,13 @@ router.get("/stream", (req, res) => {
     const token = String(req.query.token || "");
     if (!token) return res.status(401).json({ message: "No token" });
 
-    // verify token 
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-
+    // verify token
+    jwt.verify(token, process.env.JWT_SECRET);
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
-    res.setHeader("X-Accel-Buffering", "no"); // nginx: disable buffering
-
+    res.setHeader("X-Accel-Buffering", "no");
     res.flushHeaders?.();
 
     sseSend(res, "connected", { ok: true, at: Date.now() });
@@ -73,6 +161,7 @@ router.get("/stream", (req, res) => {
 /* =========================
    ORDER VALIDATION
 ========================= */
+
 const OrderSchema = z.object({
   customer_name: z.string().min(1),
   customer_phone: z.string().min(3),
@@ -192,13 +281,17 @@ router.post("/", async (req, res) => {
 
     await client.query("COMMIT");
 
-    // ✅ PUSH EVENT: new order created
+    // ✅ ADMIN PUSH: order created
     broadcast("orders_updated", {
       action: "created",
       order_id: orderId,
       order_no: orderNo,
       at: Date.now(),
     });
+
+    // ✅ CUSTOMER PUSH (optional): if customer already connected, send snapshot
+    const snapshot = await fetchOrderWithItems(orderId);
+    if (snapshot) sendToOrder(orderId, snapshot);
 
     return res.status(201).json({
       order_id: orderId,
@@ -215,8 +308,10 @@ router.post("/", async (req, res) => {
   }
 });
 
-   // PUBLIC: TRACK ORDER
-   // GET /api/orders/track/:orderNo
+/* =========================
+   PUBLIC: TRACK ORDER
+   GET /api/orders/track/:orderNo
+========================= */
 router.get("/track/:orderNo", async (req, res) => {
   try {
     const { orderNo } = req.params;
@@ -239,7 +334,10 @@ router.get("/track/:orderNo", async (req, res) => {
   }
 });
 
-// MARK COLLECTED (customer clicks "I collected")
+/* =========================
+   MARK COLLECTED (customer clicks "I collected")
+   POST /api/orders/:id/collected
+========================= */
 router.post("/:id(\\d+)/collected", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -289,69 +387,44 @@ router.post("/:id(\\d+)/collected", async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // PUSH: order collected
+    // ✅ ADMIN PUSH
     broadcast("orders_updated", {
       action: "collected",
       order_id: id,
       at: Date.now(),
     });
 
-    const updatedOrderRes = await pool.query(`SELECT * FROM orders WHERE id = $1`, [id]);
+    // ✅ CUSTOMER PUSH: send updated snapshot immediately
+    const updated = await fetchOrderWithItems(id);
+    if (updated) sendToOrder(id, updated);
 
-    const itemsRes = await pool.query(
-      `
-      SELECT
-        oi.*,
-        mi.name_en,
-        mi.name_cn
-      FROM order_items oi
-      JOIN menu_items mi ON mi.id = oi.menu_item_id
-      WHERE oi.order_id = $1
-      ORDER BY oi.id ASC
-      `,
-      [id]
-    );
-
-    return res.json({ ...updatedOrderRes.rows[0], items: itemsRes.rows });
+    return res.json(updated);
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
 });
 
-// PUBLIC: GET ORDER BY ID (TESTING)
-// GET /api/orders/:id
+/* =========================
+   PUBLIC: GET ORDER BY ID (TESTING)
+   GET /api/orders/:id
+========================= */
 router.get("/:id(\\d+)", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
 
-    const orderRes = await pool.query(`SELECT * FROM orders WHERE id = $1`, [id]);
-
-    const order = orderRes.rows?.[0];
+    const order = await fetchOrderWithItems(id);
     if (!order) return res.status(404).json({ error: "Order not found" });
 
-    const itemsRes = await pool.query(
-      `
-      SELECT
-        oi.*,
-        mi.name_en,
-        mi.name_cn
-      FROM order_items oi
-      JOIN menu_items mi ON mi.id = oi.menu_item_id
-      WHERE oi.order_id = $1
-      ORDER BY oi.id ASC
-      `,
-      [id]
-    );
-
-    return res.json({ ...order, items: itemsRes.rows });
+    return res.json(order);
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
 });
 
-// ADMIN: LIST ORDERS (WITH ITEMS)
-// GET /api/orders/admin
-
+/* =========================
+   ADMIN: LIST ORDERS (WITH ITEMS)
+   GET /api/orders/admin
+========================= */
 router.get("/admin", requireAuth, async (req, res) => {
   try {
     const r = await pool.query(`
@@ -384,8 +457,10 @@ router.get("/admin", requireAuth, async (req, res) => {
   }
 });
 
-// ADMIN: UPDATE STATUS
-// PUT /api/orders/:id
+/* =========================
+   ADMIN: UPDATE STATUS
+   PUT /api/orders/:id
+========================= */
 router.put("/:id(\\d+)", requireAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -409,13 +484,17 @@ router.put("/:id(\\d+)", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // PUSH : status updated by admin
+    // ✅ ADMIN PUSH
     broadcast("orders_updated", {
       action: "status_updated",
       order_id: id,
       status,
       at: Date.now(),
     });
+
+    // ✅ CUSTOMER PUSH: send updated snapshot immediately
+    const updated = await fetchOrderWithItems(id);
+    if (updated) sendToOrder(id, updated);
 
     return res.json({ message: "Order status updated" });
   } catch (e) {
