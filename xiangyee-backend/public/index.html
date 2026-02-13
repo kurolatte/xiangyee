@@ -29,7 +29,11 @@
 
 
   <style>
-    html { scroll-behavior: smooth; }
+    html { 
+    scroll-behavior: smooth;
+    scroll-padding-top: var(--header-offset, 110px);
+  }
+
     .backdrop { background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)); }
     .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.08); }
     .no-scrollbar::-webkit-scrollbar { display:none; }
@@ -661,6 +665,16 @@
 
   <!-- JavaScript -->
   <script>
+    function setHeaderOffset() {
+      const header = document.querySelector("header");
+      if (!header) return;
+      const h = header.getBoundingClientRect().height;
+      document.documentElement.style.setProperty("--header-offset", `${Math.ceil(h) + 12}px`);
+    }
+
+    window.addEventListener("load", setHeaderOffset);
+    window.addEventListener("resize", setHeaderOffset);
+    
     // CONFIG
     const API_BASE = "/api";
     const ASSET_BASE = location.origin;
